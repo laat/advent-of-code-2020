@@ -42,3 +42,46 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (laat/aoc-1-2 (laat/aoc-read-numbers-file "1-1.txt"))
 #+end_src
 
+* Day 2
+
+#+begin_src emacs-lisp
+  (defun laat/aoc-read-passwords-line (line)
+    (let* ((parts (split-string line ": "))
+           (rule-parts (split-string (car parts) " "))
+           (min-max (mapcar 'string-to-number (split-string (car rule-parts) "-")))
+           (min (car min-max))
+           (max (nth 1 min-max))
+           (character (car (last rule-parts)))
+           (password (string-join (cdr parts) " ")))
+      (list
+       :min min
+       :max max
+       :character character
+       :password password)))
+
+  (defun laat/aoc-read-passwords-file (filePath)
+    (mapcar 'laat/aoc-read-passwords-line
+            (with-temp-buffer
+              (insert-file-contents filePath)
+              (split-string (buffer-string) "\n" t))))
+#+end_src
+
+** Part 1
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/aoc-is-passowrd-valid-p (line)
+    (let* ((character (plist-get line :character))
+           (max (plist-get line :max))
+           (min (plist-get line :min))
+           (password (plist-get line :password))
+           (occurances (- (length (split-string password character)) 1)))
+      (and (<= min occurances) (>= max occurances))))
+
+  (length
+   (cl-remove-if-not
+    'laat/aoc-is-passowrd-valid-p
+    (laat/aoc-read-passwords-file "2-1.txt")))
+
+#+end_src
