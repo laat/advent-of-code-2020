@@ -71,7 +71,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+begin_src emacs-lisp
   (require 'cl-lib)
 
-  (defun laat/aoc-is-passowrd-valid-p (line)
+  (defun laat/aoc-2-1-is-passowrd-valid-p (line)
     (let* ((character (plist-get line :character))
            (max (plist-get line :max))
            (min (plist-get line :min))
@@ -81,7 +81,28 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   (length
    (cl-remove-if-not
-    'laat/aoc-is-passowrd-valid-p
+    'laat/aoc-2-1-is-passowrd-valid-p
     (laat/aoc-read-passwords-file "2-1.txt")))
 
 #+end_src
+
+** Part 2
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/aoc-2-2-is-passowrd-valid-p (line)
+    (let* ((character (plist-get line :character))
+           (a (- (plist-get line :min) 1))
+           (b (- (plist-get line :max) 1))
+           (password (plist-get line :password))
+           (a-is-char-p (equal character (substring password a (+ a 1))))
+           (b-is-char-p (equal character (substring password b (+ b 1)))))
+      (xor a-is-char-p b-is-char-p)))
+
+  (length
+   (cl-remove-if-not
+    'laat/aoc-2-2-is-passowrd-valid-p
+     (laat/aoc-read-passwords-file "2-1.txt")))
+#+end_src
+
