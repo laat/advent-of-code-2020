@@ -149,3 +149,115 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     '((1 1) (1 3) (1 5) (1 7) (2 1))))
 #+end_src
 
+
+* Day 4
+
+#+begin_src emacs-lisp
+    (defun laat/aoc-read-passport-strings (file-path)
+      (with-temp-buffer
+        (insert-file-contents file-path)
+        (split-string (buffer-string) "\n\n" t)))
+
+    (defun laat/aoc-read-passport (passport-s)
+      (let ((elements (split-string passport-s "[ \n]" t))
+            (props (make-hash-table :test 'equal)))
+        (progn
+          (dolist (el elements)
+            (let ((parts (split-string el ":" t)))
+              (puthash (car parts) (nth 1 parts) props))))
+        props))
+#+end_src
+
+** Part 1
+
+#+begin_src emacs-lisp
+    (require 'cl-lib)
+
+    (defun laat/aoc-is-passport-valid-1 (passport)
+      (and
+       (gethash "byr" passport)
+       (gethash "iyr" passport)
+       (gethash "eyr" passport)
+       (gethash "hgt" passport)
+       (gethash "hcl" passport)
+       (gethash "ecl" passport)
+       (gethash "pid" passport)
+       ;; (gethash "cid" passport)
+       ))
+
+    (length
+     (cl-remove-if-not
+      'laat/aoc-is-passport-valid-1
+      (mapcar
+       'laat/aoc-read-passport
+       (laat/aoc-read-passport-strings "4-1.txt"))))
+
+#+end_src
+
+** Part 2
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/matches-p (regex value)
+    (and value (string-match-p regex value)))
+
+  (defun laat/aoc-byr-is-valid-p (passport)
+    (let ((value (gethash "byr" passport)))
+      (and
+       (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+       (<= 1920 (string-to-number value))
+       (>= 2002 (string-to-number value)))))
+
+  (defun laat/aoc-iyr-is-valid-p (passport)
+    (let ((value (gethash "iyr" passport)))
+      (and
+       (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+       (<= 2010 (string-to-number value))
+       (>= 2020 (string-to-number value)))))
+
+  (defun laat/aoc-eyr-is-valid-p (passport)
+    (let ((value (gethash "eyr" passport)))
+      (and
+       (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+       (<= 2020 (string-to-number value))
+       (>= 2030 (string-to-number value)))))
+
+  (defun laat/aoc-hgt-is-valid-p (passport)
+    (let ((value (gethash "hgt" passport)))
+      (or (and (laat/matches-p "\\`[0-9]+cm\\'" value)
+               (<= 150 (string-to-number value))
+               (>= 193 (string-to-number value)))
+          (and (laat/matches-p "\\`[0-9]+in\\'" value)
+               (<= 59 (string-to-number value))
+               (>= 76 (string-to-number value))))))
+
+  (defun laat/aoc-hcl-is-valid-p (passport)
+    (let ((value (gethash "hcl" passport)))
+      (laat/matches-p "\\`\#[0-9a-f]\\{6\\}\\'" value)))
+
+  (defun laat/aoc-ecl-is-valid-p (passport)
+    (let ((value (gethash "ecl" passport)))
+      (member value '("amb" "blu" "brn" "gry" "grn" "hzl" "oth"))))
+
+  (defun laat/aoc-pid-is-valid-p (passport)
+    (let ((value (gethash "pid" passport)))
+      (and value (string-match-p "\\`[0-9]\\{9\\}\\'" value))))
+
+  (defun laat/aoc-is-passport-valid-p (passport)
+    (and
+     (laat/aoc-byr-is-valid-p passport)
+     (laat/aoc-iyr-is-valid-p passport)
+     (laat/aoc-eyr-is-valid-p passport)
+     (laat/aoc-hgt-is-valid-p passport)
+     (laat/aoc-hcl-is-valid-p passport)
+     (laat/aoc-ecl-is-valid-p passport)
+     (laat/aoc-pid-is-valid-p passport)))
+
+  (length
+   (cl-remove-if-not
+    'laat/aoc-is-passport-valid-p
+    (mapcar
+     'laat/aoc-read-passport
+     (laat/aoc-read-passport-strings "4-1.txt"))))
+#+end_src
