@@ -185,13 +185,11 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
        ;; (gethash "cid" passport)
        ))
 
-    (length
-     (cl-remove-if-not
-      'laat/aoc-is-passport-valid-1-p
-      (mapcar
-       'laat/aoc-read-passport
-       (laat/aoc-read-passport-strings "4-1.txt"))))
-
+  (thread-last "4-1.txt"
+    laat/aoc-read-passport-strings
+    (mapcar 'laat/aoc-read-passport)
+    (cl-remove-if-not 'laat/aoc-is-passport-valid-1-p)
+    length)
 #+end_src
 
 ** Part 2
@@ -199,47 +197,44 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+begin_src emacs-lisp
   (require 'cl-lib)
 
-  (defun laat/matches-p (regex value)
-    (and value (string-match-p regex value)))
-
   (defun laat/aoc-byr-is-valid-p (passport)
-    (let ((value (gethash "byr" passport)))
-      (and (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+    (when-let ((value (gethash "byr" passport)))
+      (and (string-match-p "\\`[0-9]\\{4\\}\\'" value)
            (<= 1920 (string-to-number value))
            (>= 2002 (string-to-number value)))))
 
   (defun laat/aoc-iyr-is-valid-p (passport)
-    (let ((value (gethash "iyr" passport)))
-      (and (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+    (when-let ((value (gethash "iyr" passport)))
+      (and (string-match-p "\\`[0-9]\\{4\\}\\'" value)
            (<= 2010 (string-to-number value))
            (>= 2020 (string-to-number value)))))
 
   (defun laat/aoc-eyr-is-valid-p (passport)
-    (let ((value (gethash "eyr" passport)))
-      (and (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+    (when-let ((value (gethash "eyr" passport)))
+      (and (string-match-p "\\`[0-9]\\{4\\}\\'" value)
            (<= 2020 (string-to-number value))
            (>= 2030 (string-to-number value)))))
 
   (defun laat/aoc-hgt-is-valid-p (passport)
-    (let ((value (gethash "hgt" passport)))
-      (or (and (laat/matches-p "\\`[0-9]+cm\\'" value)
+    (when-let ((value (gethash "hgt" passport)))
+      (or (and (string-match-p "\\`[0-9]+cm\\'" value)
                (<= 150 (string-to-number value))
                (>= 193 (string-to-number value)))
-          (and (laat/matches-p "\\`[0-9]+in\\'" value)
+          (and (string-match-p "\\`[0-9]+in\\'" value)
                (<= 59 (string-to-number value))
                (>= 76 (string-to-number value))))))
 
   (defun laat/aoc-hcl-is-valid-p (passport)
-    (let ((value (gethash "hcl" passport)))
-      (laat/matches-p "\\`\#[0-9a-f]\\{6\\}\\'" value)))
+    (when-let ((value (gethash "hcl" passport)))
+      (string-match-p "\\`\#[0-9a-f]\\{6\\}\\'" value)))
 
   (defun laat/aoc-ecl-is-valid-p (passport)
     (let ((value (gethash "ecl" passport)))
       (member value '("amb" "blu" "brn" "gry" "grn" "hzl" "oth"))))
 
   (defun laat/aoc-pid-is-valid-p (passport)
-    (let ((value (gethash "pid" passport)))
-      (laat/matches-p "\\`[0-9]\\{9\\}\\'" value)))
+    (when-let ((value (gethash "pid" passport)))
+      (string-match-p "\\`[0-9]\\{9\\}\\'" value)))
 
   (defun laat/aoc-is-passport-valid-2-p (passport)
     (and (laat/aoc-byr-is-valid-p passport)
@@ -250,9 +245,12 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
          (laat/aoc-ecl-is-valid-p passport)
          (laat/aoc-pid-is-valid-p passport)))
 
-  (length
-   (cl-remove-if-not
-    'laat/aoc-is-passport-valid-2-p
-    (mapcar 'laat/aoc-read-passport
-            (laat/aoc-read-passport-strings "4-1.txt"))))
+  (thread-last "4-1.txt"
+    laat/aoc-read-passport-strings
+    (mapcar 'laat/aoc-read-passport)
+    (cl-remove-if-not 'laat/aoc-is-passport-valid-2-p)
+    length)
 #+end_src
+
+#+RESULTS:
+: 186
