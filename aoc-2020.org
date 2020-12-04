@@ -106,3 +106,43 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
      (laat/aoc-read-passwords-file "2-1.txt")))
 #+end_src
 
+* Day 3
+
+** Part 1
+
+#+begin_src emacs-lisp
+  (defun laat/aoc-read-forest (filePath)
+    (mapcar
+     (lambda (line)
+       (let ((trees (mapcar (lambda (c) (if (equal ?# c) 1 0)) line)))
+         (nconc trees trees))) ;; circular list
+     (with-temp-buffer
+       (insert-file-contents filePath)
+       (split-string (buffer-string) "\n" t))))
+#+end_src
+
+#+RESULTS:
+: laat/aoc-read-forest
+
+#+begin_src emacs-lisp
+  (apply '+
+         (seq-map-indexed (lambda (trees i) (nth (* i 3) trees))
+                          (laat/aoc-read-forest "3-1.txt")))
+#+end_src
+
+** Part 2
+
+#+begin_src emacs-lisp
+  (defun laat/aoc-count-slope (down right)
+    (apply '+ (seq-map-indexed
+               (lambda (trees i) (if (eq (% i down) 0) (nth (* (/ i down) right) trees) 0))
+               (laat/aoc-read-forest "3-1.txt"))))
+
+  (apply '* (mapcar
+             (lambda (slope)
+               (let ((down (car slope))
+                     (right (nth 1 slope)))
+                 (laat/aoc-count-slope down right)))
+             '((1 1) (1 3) (1 5) (1 7) (2 1))))
+#+end_src
+
