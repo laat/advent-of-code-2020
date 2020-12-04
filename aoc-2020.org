@@ -242,7 +242,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   (defun laat/aoc-pid-is-valid-p (passport)
     (let ((value (gethash "pid" passport)))
-      (and value (string-match-p "\\`[0-9]\\{9\\}\\'" value))))
+      (laat/matches-p "\\`[0-9]\\{9\\}\\'" value)))
 
   (defun laat/aoc-is-passport-valid-2-p (passport)
     (and
