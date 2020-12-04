@@ -108,8 +108,6 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 * Day 3
 
-** Part 1
-
 #+begin_src emacs-lisp
   (defun laat/aoc-read-forest (filePath)
     (mapcar
@@ -120,6 +118,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
        (insert-file-contents filePath)
        (split-string (buffer-string) "\n" t))))
 #+end_src
+
+** Part 1
+
 
 #+begin_src emacs-lisp
   (apply '+ (seq-map-indexed (lambda (trees i) (nth (* i 3) trees))
