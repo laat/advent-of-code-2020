@@ -7,6 +7,10 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+begin_src emacs-lisp
   (defun laat/sum (numbers) (apply '+ numbers))
   (defun laat/product (numbers) (apply '* numbers))
+  (defun laat/read-lines (file-nname)
+    (with-temp-buffer
+      (insert-file-contents filePath)
+      (split-string (buffer-string) "\n" t)))
 #+end_src
 
 * Day 1
@@ -14,9 +18,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+begin_src emacs-lisp
   (defun laat/aoc-read-numbers-file (filePath)
     "read file as a list of newline separated numbers"
-    (with-temp-buffer
-      (insert-file-contents filePath)
-      (mapcar 'string-to-number (split-string (buffer-string) "\n" t))))
+    (mapcar 'string-to-number (laat/read-lines filePath)))
 #+end_src
 
 ** Part 1
@@ -68,10 +70,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
        :password password)))
 
   (defun laat/aoc-read-passwords-file (filePath)
-    (mapcar 'laat/aoc-read-passwords-line
-            (with-temp-buffer
-              (insert-file-contents filePath)
-              (split-string (buffer-string) "\n" t))))
+    (mapcar 'laat/aoc-read-passwords-line (laat/read-lines filePath)))
 #+end_src
 
 ** Part 1
@@ -122,9 +121,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
      (lambda (line)
        (let ((trees (mapcar (lambda (c) (if (equal ?# c) 1 0)) line)))
          (nconc trees trees))) ;; circular list where 1 is tree
-     (with-temp-buffer
-       (insert-file-contents filePath)
-       (split-string (buffer-string) "\n" t))))
+     (laat/read-lines filePath)))
 #+end_src
 
 ** Part 1
