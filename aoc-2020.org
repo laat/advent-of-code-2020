@@ -113,7 +113,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (mapcar
      (lambda (line)
        (let ((trees (mapcar (lambda (c) (if (equal ?# c) 1 0)) line)))
-         (nconc trees trees))) ;; circular list
+         (nconc trees trees))) ;; circular list where 1 is tree
      (with-temp-buffer
        (insert-file-contents filePath)
        (split-string (buffer-string) "\n" t))))
