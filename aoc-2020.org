@@ -123,8 +123,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 
 #+begin_src emacs-lisp
-  (apply '+ (seq-map-indexed (lambda (trees i) (nth (* i 3) trees))
-                             (laat/aoc-read-forest "3-1.txt")))
+  (apply '+ (seq-map-indexed
+             (lambda (trees i) (nth (* i 3) trees))
+             (laat/aoc-read-forest "3-1.txt")))
 #+end_src
 
 ** Part 2
