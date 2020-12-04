@@ -204,24 +204,21 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   (defun laat/aoc-byr-is-valid-p (passport)
     (let ((value (gethash "byr" passport)))
-      (and
-       (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
-       (<= 1920 (string-to-number value))
-       (>= 2002 (string-to-number value)))))
+      (and (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+           (<= 1920 (string-to-number value))
+           (>= 2002 (string-to-number value)))))
 
   (defun laat/aoc-iyr-is-valid-p (passport)
     (let ((value (gethash "iyr" passport)))
-      (and
-       (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
-       (<= 2010 (string-to-number value))
-       (>= 2020 (string-to-number value)))))
+      (and (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+           (<= 2010 (string-to-number value))
+           (>= 2020 (string-to-number value)))))
 
   (defun laat/aoc-eyr-is-valid-p (passport)
     (let ((value (gethash "eyr" passport)))
-      (and
-       (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
-       (<= 2020 (string-to-number value))
-       (>= 2030 (string-to-number value)))))
+      (and (laat/matches-p "\\`[0-9]\\{4\\}\\'" value)
+           (<= 2020 (string-to-number value))
+           (>= 2030 (string-to-number value)))))
 
   (defun laat/aoc-hgt-is-valid-p (passport)
     (let ((value (gethash "hgt" passport)))
@@ -245,19 +242,17 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
       (laat/matches-p "\\`[0-9]\\{9\\}\\'" value)))
 
   (defun laat/aoc-is-passport-valid-2-p (passport)
-    (and
-     (laat/aoc-byr-is-valid-p passport)
-     (laat/aoc-iyr-is-valid-p passport)
-     (laat/aoc-eyr-is-valid-p passport)
-     (laat/aoc-hgt-is-valid-p passport)
-     (laat/aoc-hcl-is-valid-p passport)
-     (laat/aoc-ecl-is-valid-p passport)
-     (laat/aoc-pid-is-valid-p passport)))
+    (and (laat/aoc-byr-is-valid-p passport)
+         (laat/aoc-iyr-is-valid-p passport)
+         (laat/aoc-eyr-is-valid-p passport)
+         (laat/aoc-hgt-is-valid-p passport)
+         (laat/aoc-hcl-is-valid-p passport)
+         (laat/aoc-ecl-is-valid-p passport)
+         (laat/aoc-pid-is-valid-p passport)))
 
   (length
    (cl-remove-if-not
     'laat/aoc-is-passport-valid-2-p
-    (mapcar
-     'laat/aoc-read-passport
-     (laat/aoc-read-passport-strings "4-1.txt"))))
+    (mapcar 'laat/aoc-read-passport
+            (laat/aoc-read-passport-strings "4-1.txt"))))
 #+end_src
