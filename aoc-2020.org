@@ -2,14 +2,14 @@
 
 Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
-* helpers
+* Helpers
 
 #+begin_src emacs-lisp
   (defun laat/sum (numbers) (apply '+ numbers))
   (defun laat/product (numbers) (apply '* numbers))
-  (defun laat/read-lines (file-nname)
+  (defun laat/read-lines (file-name)
     (with-temp-buffer
-      (insert-file-contents filePath)
+      (insert-file-contents file-name)
       (split-string (buffer-string) "\n" t)))
 #+end_src
 
@@ -252,5 +252,46 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     length)
 #+end_src
 
+* Day 5
+
+#+begin_src emacs-lisp
+  (defun laat/aoc-seat-to-int (pass)
+    (thread-last pass
+      (reverse)
+      (mapcar
+       (lambda (c)
+         (cond ((equal c ?F) 0)
+               ((equal c ?B) 1)
+               ((equal c ?L) 0)
+               ((equal c ?R) 1))))
+      (seq-map-indexed 'ash)
+      (apply '+)))
+#+end_src
+
+#+begin_src emacs-lisp
+  (list (laat/aoc-seat-to-int "FBFBBFFRLR")
+        (laat/aoc-seat-to-int "BFFFBBFRRR")
+        (laat/aoc-seat-to-int "FFFBBBFRRR")
+        (laat/aoc-seat-to-int "BBFFBBFRLL"))
+#+end_src
+
 #+RESULTS:
-: 186
+| 357 | 567 | 119 | 820 |
+
+** Part 1
+
+#+begin_src emacs-lisp
+  (thread-last "5.txt"
+    (laat/read-lines)
+    (mapcar 'laat/aoc-seat-to-int)
+    (apply 'max))
+#+end_src
+
+** Part 2
+
+#+begin_src emacs-lisp
+  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
+         (candidates (cdr (butlast seats)))
+         (candidates2 (mapcar (lambda (n) (+ 1 n)) (butlast seats 2))))
+    (- (car (seq-difference candidates candidates2)) 1))
+#+end_src
