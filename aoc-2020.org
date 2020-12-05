@@ -275,7 +275,6 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
         (laat/aoc-seat-to-int "BBFFBBFRLL"))
 #+end_src
 
-#+RESULTS:
 | 357 | 567 | 119 | 820 |
 
 ** Part 1
