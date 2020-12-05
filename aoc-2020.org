@@ -288,9 +288,21 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 2
 
+Set difference
+
 #+begin_src emacs-lisp
   (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
          (candidates (cdr (butlast seats)))
          (candidates2 (mapcar (lambda (n) (+ 1 n)) (butlast seats 2))))
     (- (car (seq-difference candidates candidates2)) 1))
+#+end_src
+
+Pairwise
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
+         (pairs (cl-mapcar #'list seats (rest seats)))
+         (missing (car (cl-remove-if (lambda (xs) (equal (+ 1 (car xs)) (nth 1 xs))) pairs))))
+    (+ 1 (car missing)))
 #+end_src
