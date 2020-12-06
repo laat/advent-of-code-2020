@@ -5,8 +5,6 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 * Helpers
 
 #+begin_src emacs-lisp
-  (defun laat/sum (numbers) (apply '+ numbers))
-  (defun laat/product (numbers) (apply '* numbers))
   (defun laat/read-file (file-name)
     (with-temp-buffer
       (insert-file-contents file-name)
@@ -216,25 +214,23 @@ Pairwise
 
 
 #+begin_src emacs-lisp
-  (laat/sum
-   (seq-map-indexed
-    (lambda (trees i) (nth (* i 3) trees))
-    (laat/aoc-read-forest "3-1.txt")))
+  (thread-last (laat/aoc-read-forest "3-1.txt")
+    (seq-map-indexed (lambda (trees i) (nth (* i 3) trees)))
+    (apply '+))
 #+end_src
 
 ** Part 2
 
 #+begin_src emacs-lisp
   (defun laat/aoc-count-slope (down right)
-    (laat/sum
-     (seq-map-indexed
-      (lambda (trees i) (if (eq (% i down) 0) (nth (* (/ i down) right) trees) 0))
-      (laat/aoc-read-forest "3-1.txt"))))
+    (thread-last (laat/aoc-read-forest "3-1.txt")
+      (seq-map-indexed
+       (lambda (trees i) (if (eq (% i down) 0) (nth (* (/ i down) right) trees) 0)))
+      (apply '+)))
 
-  (laat/product
-   (mapcar
-    (lambda (slope) (laat/aoc-count-slope (car slope) (nth 1 slope)))
-    '((1 1) (1 3) (1 5) (1 7) (2 1))))
+  (thread-last '((1 1) (1 3) (1 5) (1 7) (2 1))
+    (mapcar (lambda (slope) (laat/aoc-count-slope (car slope) (nth 1 slope))))
+    (apply '*))
 #+end_src
 
 
@@ -313,7 +309,7 @@ Pairwise
   (require 'cl-lib)
 
   (defun laat/aoc-1-1 (xs)
-    (laat/product (cl-intersection (mapcar (lambda (arg) (- 2020 arg)) xs) xs)))
+    (apply '* (cl-intersection (mapcar (lambda (arg) (- 2020 arg)) xs) xs)))
 
   (laat/aoc-1-1 (laat/aoc-read-numbers-file "1-1.txt"))
 #+end_src
@@ -324,16 +320,16 @@ Pairwise
   (require 'cl-lib)
 
   (defun laat/aoc-1-2 (xs)
-    (laat/product
-     (car
-      (cl-remove-if
-       (lambda (x) (not (equal (apply '+ x) 2020)))
-       (mapcan
-        (lambda (a)
-          (mapcan
-           (lambda (b)
-             (mapcar
-              (lambda (c) (list a b c)) xs)) xs)) xs)))))
+    (apply '*
+           (car
+            (cl-remove-if
+             (lambda (x) (not (equal (apply '+ x) 2020)))
+             (mapcan
+              (lambda (a)
+                (mapcan
+                 (lambda (b)
+                   (mapcar
+                    (lambda (c) (list a b c)) xs)) xs)) xs)))))
 
   (laat/aoc-1-2 (laat/aoc-read-numbers-file "1-1.txt"))
 #+end_src
