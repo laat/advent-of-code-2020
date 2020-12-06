@@ -93,7 +93,7 @@ Pairwise
 #+begin_src emacs-lisp
   (require 'cl-lib)
   (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
-         (pairs (cl-mapcar #'list seats (rest seats)))
+         (pairs (cl-mapcar #'list seats (cl-rest seats)))
          (missing (car (cl-remove-if (lambda (xs) (equal (+ 1 (car xs)) (nth 1 xs))) pairs))))
     (+ 1 (car missing)))
 #+end_src
