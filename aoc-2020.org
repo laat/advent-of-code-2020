@@ -329,8 +329,9 @@ Pairwise
               (lambda (a)
                 (mapcan
                  (lambda (b)
-                   (mapcar
-                    (lambda (c) (list a b c)) xs)) xs)) xs)))))
+                   (mapcar (lambda (c) (list a b c)) xs))
+                 xs))
+              xs)))))
 
   (laat/aoc-1-2 (laat/aoc-read-numbers-file "1-1.txt"))
 #+end_src
