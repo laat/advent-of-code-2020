@@ -20,6 +20,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 ** Part 1
 
 #+begin_src emacs-lisp
+  (require 'cl-lib)
   (thread-last (split-string (laat/read-file "6.txt") "\n\n")
     (mapcar (lambda (group) (apply 'concat (split-string group "\n"))))
     (mapcar 'cl-remove-duplicates)
@@ -30,6 +31,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 ** Part 2
 
 #+begin_src emacs-lisp
+  (require 'cl-lib)
   (defun laat/aoc-count-everyone-said-yes (group)
     (thread-last (split-string group "\n")
       (mapcar 'string-to-list)
