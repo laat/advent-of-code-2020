@@ -9,6 +9,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (with-temp-buffer
       (insert-file-contents file-name)
       (buffer-string)))
+
   (defun laat/read-lines (file-name)
     (split-string (laat/read-file file-name) "\n" t))
 #+end_src
