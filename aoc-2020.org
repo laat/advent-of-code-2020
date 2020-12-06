@@ -306,6 +306,8 @@ Pairwise
 
 ** Part 1
 
+- 2020 trick
+
 #+begin_src emacs-lisp
   (require 'cl-lib)
 
@@ -313,6 +315,19 @@ Pairwise
     (apply '* (cl-intersection (mapcar (lambda (arg) (- 2020 arg)) xs) xs)))
 
   (laat/aoc-1-1 (laat/aoc-read-numbers-file "1-1.txt"))
+#+end_src
+
+cl-loop
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (let* ((data (laat/aoc-read-numbers-file "1-1.txt"))
+         (pairs (mapcan (lambda (a) (mapcar (lambda (b) (list a b)) data)) data)))
+    (car (cl-loop for (x y) in pairs
+                  when (eq 2020 (+ x y))
+                  collect (* x y))))
+
 #+end_src
 
 ** Part 2
