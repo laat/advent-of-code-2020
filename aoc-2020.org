@@ -79,7 +79,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   (thread-last (laat/read-lines "7.txt")
     (mapcan 'laat/aoc-parse-edges)
-    (laat/aoc-make-graph)
+    (laat/aoc-make-weighted-graph)
     (laat/aoc-count-bags "shiny gold")
     (+ -1))
 #+end_src
