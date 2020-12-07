@@ -27,7 +27,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   (defun laat/aoc-parse-edges (str)
     (let* ((parts (mapcan (lambda (s) (split-string s "contain")) (split-string str ",")))
-           (root (laat/aoc-get-bag (car parts)))
+           (root (laat/aoc-get-root-bag (car parts)))
            (contents (mapcar 'laat/aoc-get-child-bag (cdr parts))))
       (mapcar (lambda (c) (cons root c)) contents)))
 #+end_src
