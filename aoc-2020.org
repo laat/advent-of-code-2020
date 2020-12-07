@@ -14,6 +14,76 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (split-string (laat/read-file file-name) "\n" t))
 #+end_src
 
+* Day 7
+
+#+begin_src emacs-lisp
+  (defun laat/aoc-get-root-bag (str)
+    (when (string-match "\\(.*\\) bag" str)
+      (match-string 1 str)))
+
+  (defun laat/aoc-get-child-bag (str)
+    (when (string-match "\\([0-9]+\\) \\(.*\\) bag\\(s\\)?" str)
+      (list (match-string 2 str) (string-to-number (match-string 1 str)))))
+
+  (defun laat/aoc-parse-edges (str)
+    (let* ((parts (mapcan (lambda (s) (split-string s "contain")) (split-string str ",")))
+           (root (laat/aoc-get-bag (car parts)))
+           (contents (mapcar 'laat/aoc-get-child-bag (cdr parts))))
+      (mapcar (lambda (c) (cons root c)) contents)))
+#+end_src
+
+** Part 1
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/aoc-make-backwards-graph (edges)
+    (let ((graph (make-hash-table :test 'equal)))
+      (cl-loop for (parent child) in edges
+               when child
+               do (puthash child (cons parent (gethash child graph)) graph))
+      graph))
+
+  (defun laat/search-graph (bag graph)
+    (append (gethash bag graph)
+            (mapcan (lambda (c) (laat/search-graph c graph))
+                    (gethash bag graph))))
+
+  (thread-last (laat/read-lines "7.txt")
+    (mapcan 'laat/aoc-parse-edges)
+    (laat/aoc-make-backwards-graph)
+    (laat/search-graph "shiny gold")
+    (cl-remove-duplicates)
+    (length))
+
+#+end_src
+
+** Part 2
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/aoc-make-weighted-graph (edges)
+    (let ((graph (make-hash-table :test 'equal)))
+      (cl-loop for (parent child weight) in edges
+               when weight
+               do (puthash parent (cons (list child weight) (gethash parent graph)) graph))
+      graph))
+
+  (defun laat/aoc-count-bags (bag graph)
+    (if-let ((children (gethash bag graph)))
+        (cl-loop for (child weight) in children
+                 sum (* weight (laat/aoc-count-bags child graph)) into sum
+                 finally return (+ 1 sum))
+      1))
+
+  (thread-last (laat/read-lines "7.txt")
+    (mapcan 'laat/aoc-parse-edges)
+    (laat/aoc-make-graph)
+    (laat/aoc-count-bags "shiny gold")
+    (+ -1))
+#+end_src
+
 * Day 6
 
 ** Part 1
