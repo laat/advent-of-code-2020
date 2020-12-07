@@ -72,8 +72,8 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   (defun laat/aoc-count-bags (bag graph)
     (cl-loop for (child weight) in (gethash bag graph)
-             sum (* weight (laat/aoc-count-bags child graph)) into sum
-             finally return (+ 1 sum)))
+             sum (* weight (laat/aoc-count-bags child graph)) into count
+             finally return (+ 1 count)))
 
   (thread-last (laat/read-lines "7.txt")
     (mapcan 'laat/aoc-parse-edges)
