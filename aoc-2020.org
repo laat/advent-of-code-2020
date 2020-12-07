@@ -38,11 +38,11 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (require 'cl-lib)
 
   (defun laat/aoc-make-backwards-graph (edges)
-    (let ((graph (make-hash-table :test 'equal)))
-      (cl-loop for (parent child) in edges
-               when child
-               do (puthash child (cons parent (gethash child graph)) graph))
-      graph))
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child) in edges
+             when child
+             do (puthash child (cons parent (gethash child graph)) graph)
+             finally return graph))
 
   (defun laat/search-graph (bag graph)
     (append (gethash bag graph)
@@ -64,18 +64,16 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (require 'cl-lib)
 
   (defun laat/aoc-make-weighted-graph (edges)
-    (let ((graph (make-hash-table :test 'equal)))
-      (cl-loop for (parent child weight) in edges
-               when weight
-               do (puthash parent (cons (list child weight) (gethash parent graph)) graph))
-      graph))
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child weight) in edges
+             when weight
+             do (puthash parent (cons (list child weight) (gethash parent graph)) graph)
+             finally return graph))
 
   (defun laat/aoc-count-bags (bag graph)
-    (if-let ((children (gethash bag graph)))
-        (cl-loop for (child weight) in children
-                 sum (* weight (laat/aoc-count-bags child graph)) into sum
-                 finally return (+ 1 sum))
-      1))
+    (cl-loop for (child weight) in (gethash bag graph)
+             sum (* weight (laat/aoc-count-bags child graph)) into sum
+             finally return (+ 1 sum)))
 
   (thread-last (laat/read-lines "7.txt")
     (mapcan 'laat/aoc-parse-edges)
