@@ -21,7 +21,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 
   (defun laat/aoc-do-inst (index acc lines visited)
-    (cond ((equal index (length lines)) (list :terminated acc))
+    (cond ((>= index (length lines)) (list :terminated acc))
           ((gethash index visited) (list :loop acc ))
           (t
            (puthash index t visited)
