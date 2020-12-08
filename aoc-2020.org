@@ -2,7 +2,8 @@
 
 Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
-* Helpers
+* Elisp
+** Helpers
 
 #+begin_src emacs-lisp
   (defun laat/read-file (file-name)
@@ -14,7 +15,8 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (split-string (laat/read-file file-name) "\n" t))
 #+end_src
 
-* Day 8
+
+** Day 8
 
 #+begin_src emacs-lisp
   (setq max-lisp-eval-depth 10000)
@@ -37,18 +39,19 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
             (laat/read-lines file-name)))
 #+end_src
 
-** Part 1
+
+*** Part 1
 
 #+begin_src emacs-lisp :exports both
   (laat/aoc-do-inst 0 0
-                    (laat/aoc-parse-instructions "8.txt")
+                    (laat/aoc-parse-instructions "data/8.txt")
                     (make-hash-table :test 'equal))
 #+end_src
 
 #+RESULTS:
 | :loop | 1600 |
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (defun laat/swap-instruction (index lines)
@@ -59,7 +62,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
             ((equal inst "jmp") (setf (car line) "nop")))
       copy))
 
-  (let ((instructions (laat/aoc-parse-instructions "8.txt")))
+  (let ((instructions (laat/aoc-parse-instructions "data/8.txt")))
     (cl-loop for i below (length instructions)
              for insts = (laat/swap-instruction i instructions)
              for res = (laat/aoc-do-inst 0 0 insts (make-hash-table :test 'equal))
@@ -71,7 +74,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 1543
 
-* Day 7
+** Day 7
 
 #+begin_src emacs-lisp
   (defun laat/aoc-get-root-bag (str)
@@ -89,7 +92,8 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
       (mapcar (lambda (c) (cons root c)) contents)))
 #+end_src
 
-** Part 1
+
+*** Part 1
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -106,7 +110,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
             (mapcan (lambda (c) (laat/search-graph c graph))
                     (gethash bag graph))))
 
-  (thread-last (laat/read-lines "7.txt")
+  (thread-last (laat/read-lines "data/7.txt")
     (mapcan 'laat/aoc-parse-edges)
     (laat/aoc-make-backwards-graph)
     (laat/search-graph "shiny gold")
@@ -118,7 +122,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 155
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -135,7 +139,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
              sum (* weight (laat/aoc-count-bags child graph)) into count
              finally return (+ 1 count)))
 
-  (thread-last (laat/read-lines "7.txt")
+  (thread-last (laat/read-lines "data/7.txt")
     (mapcan 'laat/aoc-parse-edges)
     (laat/aoc-make-weighted-graph)
     (laat/aoc-count-bags "shiny gold")
@@ -145,13 +149,13 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 54803
 
-* Day 6
+** Day 6
 
-** Part 1
+*** Part 1
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
-  (thread-last (split-string (laat/read-file "6.txt") "\n\n")
+  (thread-last (split-string (laat/read-file "data/6.txt") "\n\n")
     (mapcar (lambda (group) (apply 'concat (split-string group "\n"))))
     (mapcar 'cl-remove-duplicates)
     (mapcar 'length)
@@ -161,7 +165,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 6630
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -172,7 +176,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
       (cl-reduce 'cl-intersection)
       (length)))
 
-  (thread-last (split-string (laat/read-file "6.txt") "\n\n")
+  (thread-last (split-string (laat/read-file "data/6.txt") "\n\n")
     (mapcar 'laat/aoc-count-everyone-said-yes)
     (apply '+))
 #+end_src
@@ -180,7 +184,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 3437
 
-* Day 5
+** Day 5
 
 #+begin_src emacs-lisp
   (defun laat/aoc-seat-to-int (pass)
@@ -196,6 +200,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
       (apply '+)))
 #+end_src
 
+
 #+begin_src emacs-lisp :exports both
   (list (laat/aoc-seat-to-int "FBFBBFFRLR")
         (laat/aoc-seat-to-int "BFFFBBFRRR")
@@ -206,10 +211,10 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 | 357 | 567 | 119 | 820 |
 
-** Part 1
+*** Part 1
 
 #+begin_src emacs-lisp :exports both
-  (thread-last "5.txt"
+  (thread-last "data/5.txt"
     (laat/read-lines)
     (mapcar 'laat/aoc-seat-to-int)
     (apply 'max))
@@ -218,12 +223,12 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 951
 
-** Part 2
+*** Part 2
 
 Set difference
 
 #+begin_src emacs-lisp :exports both
-  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
+  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "data/5.txt")) '<))
          (candidates (cdr (butlast seats)))
          (candidates2 (mapcar (lambda (n) (+ 1 n)) (butlast seats 2))))
     (- (car (seq-difference candidates candidates2)) 1))
@@ -236,7 +241,7 @@ Pairwise
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
-  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
+  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "data/5.txt")) '<))
          (pairs (cl-mapcar #'list seats (cl-rest seats)))
          (missing (car (cl-remove-if (lambda (xs) (equal (+ 1 (car xs)) (nth 1 xs))) pairs))))
     (+ 1 (car missing)))
@@ -245,7 +250,7 @@ Pairwise
 #+RESULTS:
 : 653
 
-* Day 4
+** Day 4
 
 #+begin_src emacs-lisp
     (defun laat/aoc-read-passport-strings (file-path)
@@ -266,7 +271,7 @@ Pairwise
 #+RESULTS:
 : laat/aoc-read-passport
 
-** Part 1
+*** Part 1
 
 #+begin_src emacs-lisp :exports both
     (require 'cl-lib)
@@ -283,7 +288,7 @@ Pairwise
        ;; (gethash "cid" passport)
        ))
 
-  (thread-last "4-1.txt"
+  (thread-last "data/4-1.txt"
     laat/aoc-read-passport-strings
     (mapcar 'laat/aoc-read-passport)
     (cl-remove-if-not 'laat/aoc-is-passport-valid-1-p)
@@ -293,7 +298,7 @@ Pairwise
 #+RESULTS:
 : 242
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -346,7 +351,7 @@ Pairwise
          (laat/aoc-ecl-is-valid-p passport)
          (laat/aoc-pid-is-valid-p passport)))
 
-  (thread-last "4-1.txt"
+  (thread-last "data/4-1.txt"
     laat/aoc-read-passport-strings
     (mapcar 'laat/aoc-read-passport)
     (cl-remove-if-not 'laat/aoc-is-passport-valid-2-p)
@@ -356,7 +361,7 @@ Pairwise
 #+RESULTS:
 : 186
 
-* Day 3
+** Day 3
 
 #+begin_src emacs-lisp
   (defun laat/aoc-read-forest (filePath)
@@ -367,11 +372,14 @@ Pairwise
      (laat/read-lines filePath)))
 #+end_src
 
-** Part 1
+#+RESULTS:
+: laat/aoc-read-forest
+
+*** Part 1
 
 
 #+begin_src emacs-lisp :exports both
-  (thread-last (laat/aoc-read-forest "3-1.txt")
+  (thread-last (laat/aoc-read-forest "data/3-1.txt")
     (seq-map-indexed (lambda (trees i) (nth (* i 3) trees)))
     (apply '+))
 #+end_src
@@ -379,11 +387,11 @@ Pairwise
 #+RESULTS:
 : 242
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (defun laat/aoc-count-slope (down right)
-    (thread-last (laat/aoc-read-forest "3-1.txt")
+    (thread-last (laat/aoc-read-forest "data/3-1.txt")
       (seq-map-indexed
        (lambda (trees i) (if (eq (% i down) 0) (nth (* (/ i down) right) trees) 0)))
       (apply '+)))
@@ -397,7 +405,7 @@ Pairwise
 : 2265549792
 
 
-* Day 2
+** Day 2
 
 #+begin_src emacs-lisp
   (defun laat/aoc-read-passwords-line (line)
@@ -418,7 +426,10 @@ Pairwise
     (mapcar 'laat/aoc-read-passwords-line (laat/read-lines filePath)))
 #+end_src
 
-** Part 1
+#+RESULTS:
+: laat/aoc-read-passwords-file
+
+*** Part 1
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -434,14 +445,14 @@ Pairwise
   (length
    (cl-remove-if-not
     'laat/aoc-2-1-is-passowrd-valid-p
-    (laat/aoc-read-passwords-file "2-1.txt")))
+    (laat/aoc-read-passwords-file "data/2-1.txt")))
 
 #+end_src
 
 #+RESULTS:
 : 398
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -458,13 +469,13 @@ Pairwise
   (length
    (cl-remove-if-not
     'laat/aoc-2-2-is-passowrd-valid-p
-     (laat/aoc-read-passwords-file "2-1.txt")))
+     (laat/aoc-read-passwords-file "data/2-1.txt")))
 #+end_src
 
 #+RESULTS:
 : 562
 
-* Day 1
+** Day 1
 
 #+begin_src emacs-lisp
   (defun laat/aoc-read-numbers-file (filePath)
@@ -475,7 +486,7 @@ Pairwise
 #+RESULTS:
 : laat/aoc-read-numbers-file
 
-** Part 1
+*** Part 1
 
 =- 2020= trick
 
@@ -485,7 +496,7 @@ Pairwise
   (defun laat/aoc-1-1 (xs)
     (apply '* (cl-intersection (mapcar (lambda (arg) (- 2020 arg)) xs) xs)))
 
-  (laat/aoc-1-1 (laat/aoc-read-numbers-file "1-1.txt"))
+  (laat/aoc-1-1 (laat/aoc-read-numbers-file "data/1-1.txt"))
 #+end_src
 
 #+RESULTS:
@@ -496,7 +507,7 @@ cl-loop
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (let* ((data (laat/aoc-read-numbers-file "1-1.txt"))
+  (let* ((data (laat/aoc-read-numbers-file "data/1-1.txt"))
          (pairs (mapcan (lambda (a) (mapcar (lambda (b) (list a b)) data)) data)))
     (car (cl-loop for (x y) in pairs
                   when (eq 2020 (+ x y))
@@ -507,7 +518,7 @@ cl-loop
 #+RESULTS:
 : 658899
 
-** Part 2
+*** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
@@ -525,7 +536,7 @@ cl-loop
                  xs))
               xs)))))
 
-  (laat/aoc-1-2 (laat/aoc-read-numbers-file "1-1.txt"))
+  (laat/aoc-1-2 (laat/aoc-read-numbers-file "data/1-1.txt"))
 #+end_src
 
 #+RESULTS:
