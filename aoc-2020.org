@@ -19,21 +19,21 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 ** Day 8
 
 #+begin_src emacs-lisp
+  ;; elisp does not have TCO. Cheating
   (setq max-lisp-eval-depth 10000)
   (setq max-specpdl-size 32000)
 
-
-  (defun laat/aoc-do-inst (index acc lines visited)
-    (cond ((>= index (length lines)) (list :terminated acc))
+  (defun laat/aoc-exec (index acc prog visited)
+    (cond ((>= index (length prog)) (list :terminated acc))
           ((gethash index visited) (list :loop acc ))
           (t
            (puthash index t visited)
-           (seq-let (inst v) (nth index lines)
-             (cond ((equal inst "nop") (laat/aoc-do-inst (+ 1 index) acc lines visited))
-                   ((equal inst "acc") (laat/aoc-do-inst (+ 1 index) (+ v acc) lines visited))
-                   ((equal inst "jmp") (laat/aoc-do-inst (+ v index) acc lines visited)))))))
+           (seq-let (inst v) (nth index prog)
+             (cond ((equal inst "nop") (laat/aoc-exec (+ 1 index) acc prog visited))
+                   ((equal inst "acc") (laat/aoc-exec (+ 1 index) (+ v acc) prog visited))
+                   ((equal inst "jmp") (laat/aoc-exec (+ v index) acc prog visited)))))))
 
-  (defun laat/aoc-parse-instructions (file-name)
+  (defun laat/aoc-parse-program (file-name)
     (mapcar (lambda (line) (seq-let (inst value) (split-string line " ")
                              (list inst (string-to-number value))))
             (laat/read-lines file-name)))
@@ -43,9 +43,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 *** Part 1
 
 #+begin_src emacs-lisp :exports both
-  (laat/aoc-do-inst 0 0
-                    (laat/aoc-parse-instructions "data/8.txt")
-                    (make-hash-table :test 'equal))
+  (laat/aoc-exec 0 0 (laat/aoc-parse-program "data/8.txt") (make-hash-table :test 'equal))
 #+end_src
 
 #+RESULTS:
@@ -54,18 +52,18 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 *** Part 2
 
 #+begin_src emacs-lisp :exports both
-  (defun laat/swap-instruction (index lines)
-    (let* ((copy (copy-tree lines))
+  (defun laat/swap-instruction (index program)
+    (let* ((copy (copy-tree program))
            (line (nth index copy))
            (inst (car line)))
       (cond ((equal inst "nop") (setf (car line) "jmp"))
             ((equal inst "jmp") (setf (car line) "nop")))
       copy))
 
-  (let ((instructions (laat/aoc-parse-instructions "data/8.txt")))
-    (cl-loop for i below (length instructions)
-             for insts = (laat/swap-instruction i instructions)
-             for res = (laat/aoc-do-inst 0 0 insts (make-hash-table :test 'equal))
+  (let ((program (laat/aoc-parse-program "data/8.txt")))
+    (cl-loop for i below (length program)
+             for insts = (laat/swap-instruction i program)
+             for res = (laat/aoc-exec 0 0 insts (make-hash-table :test 'equal))
              until (equal (car res) :terminated)
              finally return (nth 1 res)))
 
