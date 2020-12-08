@@ -51,10 +51,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (defun laat/swap-instruction (index lines)
     (let* ((copy (copy-tree lines))
            (line (nth index copy))
-           (inst (car line))
-           (value (nth 1 line)))
-      (cond ((equal inst "nop") (setf (nth index copy) (list "jmp" value)))
-            ((equal inst "jmp") (setf (nth index copy) (list "nop" value))))
+           (inst (car line)))
+      (cond ((equal inst "nop") (setf (car line) "jmp"))
+            ((equal inst "jmp") (setf (car line) "nop")))
       copy))
 
   (let ((instructions (laat/aoc-parse-instructions "8.txt")))
