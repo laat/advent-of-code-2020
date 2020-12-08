@@ -91,7 +91,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-make-backwards-graph (edges)
@@ -115,9 +115,12 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+end_src
 
+#+RESULTS:
+: 155
+
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-make-weighted-graph (edges)
@@ -139,11 +142,14 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (+ -1))
 #+end_src
 
+#+RESULTS:
+: 54803
+
 * Day 6
 
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
   (thread-last (split-string (laat/read-file "6.txt") "\n\n")
     (mapcar (lambda (group) (apply 'concat (split-string group "\n"))))
@@ -152,9 +158,12 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (apply '+))
 #+end_src
 
+#+RESULTS:
+: 6630
+
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
   (defun laat/aoc-count-everyone-said-yes (group)
     (thread-last (split-string group "\n")
@@ -167,6 +176,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (mapcar 'laat/aoc-count-everyone-said-yes)
     (apply '+))
 #+end_src
+
+#+RESULTS:
+: 3437
 
 * Day 5
 
@@ -184,44 +196,54 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
       (apply '+)))
 #+end_src
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (list (laat/aoc-seat-to-int "FBFBBFFRLR")
         (laat/aoc-seat-to-int "BFFFBBFRRR")
         (laat/aoc-seat-to-int "FFFBBBFRRR")
         (laat/aoc-seat-to-int "BBFFBBFRLL"))
 #+end_src
 
+#+RESULTS:
 | 357 | 567 | 119 | 820 |
 
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (thread-last "5.txt"
     (laat/read-lines)
     (mapcar 'laat/aoc-seat-to-int)
     (apply 'max))
 #+end_src
 
+#+RESULTS:
+: 951
+
 ** Part 2
 
 Set difference
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
          (candidates (cdr (butlast seats)))
          (candidates2 (mapcar (lambda (n) (+ 1 n)) (butlast seats 2))))
     (- (car (seq-difference candidates candidates2)) 1))
 #+end_src
 
+#+RESULTS:
+: 653
+
 Pairwise
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
   (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "5.txt")) '<))
          (pairs (cl-mapcar #'list seats (cl-rest seats)))
          (missing (car (cl-remove-if (lambda (xs) (equal (+ 1 (car xs)) (nth 1 xs))) pairs))))
     (+ 1 (car missing)))
 #+end_src
+
+#+RESULTS:
+: 653
 
 * Day 4
 
@@ -241,9 +263,12 @@ Pairwise
         props))
 #+end_src
 
+#+RESULTS:
+: laat/aoc-read-passport
+
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
     (require 'cl-lib)
 
     (defun laat/aoc-is-passport-valid-1-p (passport)
@@ -265,9 +290,12 @@ Pairwise
     length)
 #+end_src
 
+#+RESULTS:
+: 242
+
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-byr-is-valid-p (passport)
@@ -325,6 +353,9 @@ Pairwise
     length)
 #+end_src
 
+#+RESULTS:
+: 186
+
 * Day 3
 
 #+begin_src emacs-lisp
@@ -339,15 +370,18 @@ Pairwise
 ** Part 1
 
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (thread-last (laat/aoc-read-forest "3-1.txt")
     (seq-map-indexed (lambda (trees i) (nth (* i 3) trees)))
     (apply '+))
 #+end_src
 
+#+RESULTS:
+: 242
+
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun laat/aoc-count-slope (down right)
     (thread-last (laat/aoc-read-forest "3-1.txt")
       (seq-map-indexed
@@ -383,7 +417,7 @@ Pairwise
 
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-2-1-is-passowrd-valid-p (line)
@@ -401,9 +435,12 @@ Pairwise
 
 #+end_src
 
+#+RESULTS:
+: 398
+
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-2-2-is-passowrd-valid-p (line)
@@ -421,6 +458,9 @@ Pairwise
      (laat/aoc-read-passwords-file "2-1.txt")))
 #+end_src
 
+#+RESULTS:
+: 562
+
 * Day 1
 
 #+begin_src emacs-lisp
@@ -429,11 +469,14 @@ Pairwise
     (mapcar 'string-to-number (laat/read-lines filePath)))
 #+end_src
 
+#+RESULTS:
+: laat/aoc-read-numbers-file
+
 ** Part 1
 
 =- 2020= trick
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-1-1 (xs)
@@ -442,9 +485,12 @@ Pairwise
   (laat/aoc-1-1 (laat/aoc-read-numbers-file "1-1.txt"))
 #+end_src
 
+#+RESULTS:
+: 658899
+
 cl-loop
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (let* ((data (laat/aoc-read-numbers-file "1-1.txt"))
@@ -455,9 +501,12 @@ cl-loop
 
 #+end_src
 
+#+RESULTS:
+: 658899
+
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
   (defun laat/aoc-1-2 (xs)
@@ -475,3 +524,6 @@ cl-loop
 
   (laat/aoc-1-2 (laat/aoc-read-numbers-file "1-1.txt"))
 #+end_src
+
+#+RESULTS:
+: 155806250
