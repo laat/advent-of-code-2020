@@ -393,6 +393,9 @@ Pairwise
     (apply '*))
 #+end_src
 
+#+RESULTS:
+: 2265549792
+
 
 * Day 2
 
