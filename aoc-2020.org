@@ -15,6 +15,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+end_src
 
 * Day 8
+
 #+begin_src emacs-lisp
   (setq max-lisp-eval-depth 10000)
   (setq max-specpdl-size 32000)
@@ -37,6 +38,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+end_src
 
 ** Part 1
+
 #+begin_src emacs-lisp
   (laat/aoc-do-inst 0 0
                     (laat/aoc-parse-instructions "8.txt")
@@ -47,6 +49,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 | :loop | 1600 |
 
 ** Part 2
+
 #+begin_src emacs-lisp
   (defun laat/swap-instruction (index lines)
     (let* ((copy (copy-tree lines))
@@ -67,7 +70,6 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+RESULTS:
 : 1543
-
 
 * Day 7
 
