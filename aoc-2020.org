@@ -39,7 +39,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (laat/aoc-do-inst 0 0
                     (laat/aoc-parse-instructions "8.txt")
                     (make-hash-table :test 'equal))
@@ -50,7 +50,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun laat/swap-instruction (index lines)
     (let* ((copy (copy-tree lines))
            (line (nth index copy))
