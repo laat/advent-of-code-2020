@@ -14,6 +14,62 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (split-string (laat/read-file file-name) "\n" t))
 #+end_src
 
+* Day 8
+#+begin_src emacs-lisp
+  (setq max-lisp-eval-depth 10000)
+  (setq max-specpdl-size 32000)
+
+
+  (defun laat/aoc-do-inst (index acc lines visited)
+    (cond ((equal index (length lines)) (list :terminated acc))
+          ((gethash index visited) (list :loop acc ))
+          (t
+           (puthash index t visited)
+           (seq-let (inst v) (nth index lines)
+             (cond ((equal inst "nop") (laat/aoc-do-inst (+ 1 index) acc lines visited))
+                   ((equal inst "acc") (laat/aoc-do-inst (+ 1 index) (+ v acc) lines visited))
+                   ((equal inst "jmp") (laat/aoc-do-inst (+ v index) acc lines visited)))))))
+
+  (defun laat/aoc-parse-instructions (file-name)
+    (mapcar (lambda (line) (seq-let (inst value) (split-string line " ")
+                             (list inst (string-to-number value))))
+            (laat/read-lines file-name)))
+#+end_src
+
+** Part 1
+#+begin_src emacs-lisp
+  (laat/aoc-do-inst 0 0
+                    (laat/aoc-parse-instructions "8.txt")
+                    (make-hash-table :test 'equal))
+#+end_src
+
+#+RESULTS:
+| :loop | 1600 |
+
+** Part 2
+#+begin_src emacs-lisp
+  (defun laat/swap-instruction (index lines)
+    (let* ((copy (copy-tree lines))
+           (line (nth index copy))
+           (inst (car line))
+           (value (nth 1 line)))
+      (cond ((equal inst "nop") (setf (nth index copy) (list "jmp" value)))
+            ((equal inst "jmp") (setf (nth index copy) (list "nop" value))))
+      copy))
+
+  (let ((instructions (laat/aoc-parse-instructions "8.txt")))
+    (cl-loop for i below (length instructions)
+             for insts = (laat/swap-instruction i instructions)
+             for res = (laat/aoc-do-inst 0 0 insts (make-hash-table :test 'equal))
+             until (equal (car res) :terminated)
+             finally return (nth 1 res)))
+
+#+end_src
+
+#+RESULTS:
+: 1543
+
+
 * Day 7
 
 #+begin_src emacs-lisp
