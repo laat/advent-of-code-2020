@@ -25,14 +25,14 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/combinations (a b)
+  (defun laat/cartesian-product (a b)
     (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
 
   (defun laat/aoc-valid-xmas (pre n numbers)
     (let* ((preamble (cl-subseq numbers n (+ n pre)))
            (valid-sums (mapcar (lambda (xs) (apply '+ xs))
                                (cl-remove-if (lambda (xs) (eq (car xs) (cadr xs)))
-                                             (laat/combinations preamble preamble))))
+                                             (laat/cartesian-product preamble preamble))))
            (test (nth (+ n pre) numbers)))
       (member test valid-sums)))
 
