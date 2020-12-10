@@ -81,6 +81,37 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 296196766695424
 
+** Part 2 (non-graph)
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/get-valid-next-number (current numbers)
+    (cl-loop for next in numbers
+             when (and (> next current) (<= next (+ 3 current)))
+             collect next))
+
+  (defun laat/count-paths-to-sink (n sink numbers mem)
+    (cond
+     ((eq sink n) 1)
+     ((gethash n mem) (gethash n mem)) ;; already counted
+     (t
+      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink numbers mem))
+                                   (laat/get-valid-next-number n numbers)))))
+        (puthash n res mem)
+        res))))
+
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (start 0)
+         (sink (+ 3 (apply 'max data)))
+         (numbers (sort (cons start (cons sink data)) '<)))
+    (laat/count-paths-to-sink start sink numbers
+                              (make-hash-table :test 'eq)))
+#+end_src
+
+#+RESULTS:
+: 296196766695424
+
 * Day 9
 
 ** Part 1
