@@ -17,6 +17,70 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : laat/read-lines
 
+* Day 10
+
+** Part 1
+#+begin_src emacs-lisp
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (numbers (sort (cons 0 (cons (+ 3 (apply 'max data)) data)) '<))
+         (pairs (cl-mapcar #'list numbers (cl-rest numbers)))
+         (diffs (mapcar (lambda (xs) (- (cadr xs) (car xs))) pairs)))
+    (* (cl-count-if (lambda (n) (eq n 3)) diffs)
+       (cl-count-if (lambda (n) (eq n 1)) diffs)))
+#+end_src
+
+#+RESULTS:
+: 2516
+
+** Part 2
+
+#+begin_src emacs-lisp
+  (require 'cl-lib)
+
+  (defun laat/get-valid-next-number (i numbers)
+    (cl-loop with current = (nth i numbers)
+             for n in (nthcdr (+ i 1) numbers)
+             when (<= n (+ 3 current))
+             collect n))
+
+  (defun laat/aoc-make-plug-edges (numbers)
+    (mapcan 'identity ;; flatten 1 level
+            (seq-map-indexed
+             (lambda (parent i)
+               (mapcar (lambda (child) (list parent child))
+                       (laat/get-valid-next-number i numbers)))
+             numbers)))
+
+  (defun laat/aoc-make-graph (edges)
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child) in edges
+             when child
+             do (puthash parent (cons child (gethash parent graph)) graph)
+             finally return graph))
+
+  (defun laat/count-paths-to-sink (n sink graph mem)
+    (cond
+     ((eq sink n) 1)
+     ((gethash n mem) (gethash n mem)) ;; already counted
+     (t
+      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink graph mem))
+                                   (gethash n graph)))))
+        (puthash n res mem)
+        res))))
+
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (start 0)
+         (sink (+ 3 (apply 'max data)))
+         (numbers (sort (cons start (cons sink data)) '<))
+         (edges (laat/aoc-make-plug-edges numbers)))
+    (laat/count-paths-to-sink start sink
+                              (laat/aoc-make-graph edges)
+                              (make-hash-table :test 'eq)))
+#+end_src
+
+#+RESULTS:
+: 296196766695424
+
 * Day 9
 
 ** Part 1
