@@ -5,6 +5,16 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 * Helpers
 
 #+begin_src emacs-lisp
+  (require 'cl-lib)
+  (defun laat/cross (a b) (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
+  (defun laat/range (len) (cl-loop for i below len collect i))
+  (defun laat/string-to-char (str) (mapcar 'identity str))
+  (defun laat/make-dict (kv-list &rest htargs)
+    (cl-loop with dict = (apply 'make-hash-table htargs)
+             for (k v) in kv-list
+             do (puthash k v dict)
+             finally return dict))
+
   (defun laat/read-file (file-name)
     (with-temp-buffer
       (insert-file-contents file-name)
@@ -17,380 +27,185 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : laat/read-lines
 
-* Day 10
+* Day 1
 
-** Part 1
 #+begin_src emacs-lisp
-  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
-         (numbers (sort (cons 0 (cons (+ 3 (apply 'max data)) data)) '<))
-         (pairs (cl-mapcar #'list numbers (cl-rest numbers)))
-         (diffs (mapcar (lambda (xs) (- (cadr xs) (car xs))) pairs)))
-    (* (cl-count-if (lambda (n) (eq n 3)) diffs)
-       (cl-count-if (lambda (n) (eq n 1)) diffs)))
+  (defun laat/aoc-read-numbers-file (filePath)
+    "read file as a list of newline separated numbers"
+    (mapcar 'string-to-number (laat/read-lines filePath)))
 #+end_src
 
 #+RESULTS:
-: 2516
-
-** Part 2
-
-#+begin_src emacs-lisp
-  (require 'cl-lib)
-
-  (defun laat/get-valid-next-number (i numbers)
-    (cl-loop with current = (nth i numbers)
-             for n in (nthcdr (+ i 1) numbers)
-             when (<= n (+ 3 current))
-             collect n))
-
-  (defun laat/aoc-make-plug-edges (numbers)
-    (mapcan 'identity ;; flatten 1 level
-            (seq-map-indexed
-             (lambda (parent i)
-               (mapcar (lambda (child) (list parent child))
-                       (laat/get-valid-next-number i numbers)))
-             numbers)))
-
-  (defun laat/aoc-make-graph (edges)
-    (cl-loop with graph = (make-hash-table :test 'equal)
-             for (parent child) in edges
-             when child
-             do (puthash parent (cons child (gethash parent graph)) graph)
-             finally return graph))
-
-  (defun laat/count-paths-to-sink (n sink graph mem)
-    (cond
-     ((eq sink n) 1)
-     ((gethash n mem) (gethash n mem)) ;; already counted
-     (t
-      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink graph mem))
-                                   (gethash n graph)))))
-        (puthash n res mem)
-        res))))
-
-  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
-         (start 0)
-         (sink (+ 3 (apply 'max data)))
-         (numbers (sort (cons start (cons sink data)) '<))
-         (edges (laat/aoc-make-plug-edges numbers)))
-    (laat/count-paths-to-sink start sink
-                              (laat/aoc-make-graph edges)
-                              (make-hash-table :test 'eq)))
-#+end_src
-
-#+RESULTS:
-: 296196766695424
-
-** Part 2 (non-graph)
-
-#+begin_src emacs-lisp
-  (require 'cl-lib)
-
-  (defun laat/get-next-plugs (current numbers)
-    (cl-loop for next in numbers
-             when (and (> next current) (<= next (+ 3 current)))
-             collect next))
-
-  (defun laat/count-paths-to-sink (n sink numbers mem)
-    (cond
-     ((eq sink n) 1)
-     ((gethash n mem) (gethash n mem)) ;; already counted
-     (t
-      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink numbers mem))
-                                   (laat/get-next-plugs n numbers)))))
-        (puthash n res mem)
-        res))))
-
-  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
-         (sink (+ 3 (apply 'max data)))
-         (numbers (cons sink data)))
-    (laat/count-paths-to-sink 0 sink numbers
-                              (make-hash-table :test 'eq)))
-#+end_src
-
-* Day 9
+: laat/aoc-read-numbers-file
 
 ** Part 1
 
-#+name: day-9-1
-#+begin_src emacs-lisp :exports both
-  (require 'cl-lib)
-
-  (defun laat/cartesian-product (a b)
-    (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
-
-  (defun laat/aoc-valid-xmas (pre n numbers)
-    (let* ((preamble (cl-subseq numbers n (+ n pre)))
-           (valid-sums (mapcar (lambda (xs) (apply '+ xs))
-                               (cl-remove-if (lambda (xs) (eq (car xs) (cadr xs)))
-                                             (laat/cartesian-product preamble preamble))))
-           (test (nth (+ n pre) numbers)))
-      (member test valid-sums)))
-
-  (cl-loop with data = (mapcar 'string-to-number (laat/read-lines "data/9.txt"))
-           with preamble = 25
-           for i below (- (length data) preamble)
-           until (not (laat/aoc-valid-xmas preamble i data))
-           finally return (list :i (+ i preamble) :value (nth (+ i preamble) data)))
-#+end_src
-
-#+RESULTS: day-9-1
-| :i | 562 | :value | 144381670 |
-
-** Part 2
-
-#+begin_src emacs-lisp :var part1=day-9-1 :exports both
-  (defun laat/has-sum (needle numbers)
-    (cl-loop for n in numbers
-             collect n into res1
-             sum n into res2
-             until (>= res2 needle)
-             finally return (cond ((eq res2 needle) res1))))
-
-  (cl-loop with numbers = (mapcar 'string-to-number (laat/read-lines "data/9.txt"))
-           with needle = (plist-get part1 :value)
-           with needle-i = (plist-get part1 :i)
-           for i below needle-i
-           for r = (laat/has-sum needle (cl-subseq numbers i needle-i))
-           until r
-           finally return (+ (apply 'max r) (apply 'min r)))
-
-#+end_src
-
-#+RESULTS:
-: 20532569
-
-* Day 8
-
-#+begin_src emacs-lisp
-  ;; elisp does not have TCO. Cheating
-  (setq max-lisp-eval-depth 10000)
-  (setq max-specpdl-size 32000)
-
-  (defun laat/aoc-exec (index acc prog visited)
-    (cond ((>= index (length prog)) (list :terminated acc))
-          ((gethash index visited) (list :loop acc ))
-          (t
-           (puthash index t visited)
-           (seq-let (inst v) (nth index prog)
-             (cond ((equal inst "nop") (laat/aoc-exec (+ 1 index) acc prog visited))
-                   ((equal inst "acc") (laat/aoc-exec (+ 1 index) (+ v acc) prog visited))
-                   ((equal inst "jmp") (laat/aoc-exec (+ v index) acc prog visited)))))))
-
-  (defun laat/aoc-parse-program (file-name)
-    (mapcar (lambda (line) (seq-let (inst value) (split-string line " ")
-                             (list inst (string-to-number value))))
-            (laat/read-lines file-name)))
-#+end_src
-
-
-** Part 1
-
-#+begin_src emacs-lisp :exports both
-  (laat/aoc-exec 0 0 (laat/aoc-parse-program "data/8.txt") (make-hash-table :test 'equal))
-#+end_src
-
-#+RESULTS:
-| :loop | 1600 |
-
-** Part 2
-
-#+begin_src emacs-lisp :exports both
-  (defun laat/swap-instruction (index program)
-    (let* ((copy (copy-tree program))
-           (line (nth index copy))
-           (inst (car line)))
-      (cond ((equal inst "nop") (setf (car line) "jmp"))
-            ((equal inst "jmp") (setf (car line) "nop")))
-      copy))
-
-  (let ((program (laat/aoc-parse-program "data/8.txt")))
-    (cl-loop for i below (length program)
-             for insts = (laat/swap-instruction i program)
-             for res = (laat/aoc-exec 0 0 insts (make-hash-table :test 'equal))
-             until (equal (car res) :terminated)
-             finally return (nth 1 res)))
-
-#+end_src
-
-#+RESULTS:
-: 1543
-
-* Day 7
-
-#+begin_src emacs-lisp
-  (defun laat/aoc-get-root-bag (str)
-    (when (string-match "\\(.*\\) bag" str)
-      (match-string 1 str)))
-
-  (defun laat/aoc-get-child-bag (str)
-    (when (string-match "\\([0-9]+\\) \\(.*\\) bag\\(s\\)?" str)
-      (list (match-string 2 str) (string-to-number (match-string 1 str)))))
-
-  (defun laat/aoc-parse-edges (str)
-    (let* ((parts (mapcan (lambda (s) (split-string s "contain")) (split-string str ",")))
-           (root (laat/aoc-get-root-bag (car parts)))
-           (contents (mapcar 'laat/aoc-get-child-bag (cdr parts))))
-      (mapcar (lambda (c) (cons root c)) contents)))
-#+end_src
-
-
-** Part 1
+=- 2020= trick
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/aoc-make-backwards-graph (edges)
-    (cl-loop with graph = (make-hash-table :test 'equal)
-             for (parent child) in edges
-             when child
-             do (puthash child (cons parent (gethash child graph)) graph)
-             finally return graph))
+  (defun laat/aoc-1-1 (xs)
+    (apply '* (cl-intersection (mapcar (lambda (arg) (- 2020 arg)) xs) xs)))
 
-  (defun laat/search-graph (bag graph)
-    (append (gethash bag graph)
-            (mapcan (lambda (c) (laat/search-graph c graph))
-                    (gethash bag graph))))
+  (laat/aoc-1-1 (laat/aoc-read-numbers-file "data/1-1.txt"))
+#+end_src
 
-  (thread-last (laat/read-lines "data/7.txt")
-    (mapcan 'laat/aoc-parse-edges)
-    (laat/aoc-make-backwards-graph)
-    (laat/search-graph "shiny gold")
-    (cl-remove-duplicates)
-    (length))
+#+RESULTS:
+: 658899
+
+cl-loop
+
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+
+  (let* ((data (laat/aoc-read-numbers-file "data/1-1.txt"))
+         (pairs (mapcan (lambda (a) (mapcar (lambda (b) (list a b)) data)) data)))
+    (car (cl-loop for (x y) in pairs
+                  when (eq 2020 (+ x y))
+                  collect (* x y))))
 
 #+end_src
 
 #+RESULTS:
-: 155
+: 658899
 
 ** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/aoc-make-weighted-graph (edges)
-    (cl-loop with graph = (make-hash-table :test 'equal)
-             for (parent child weight) in edges
-             when weight
-             do (puthash parent (cons (list child weight) (gethash parent graph)) graph)
-             finally return graph))
+  (defun laat/aoc-1-2 (xs)
+    (apply '*
+           (car
+            (cl-remove-if
+             (lambda (x) (not (equal (apply '+ x) 2020)))
+             (mapcan
+              (lambda (a)
+                (mapcan
+                 (lambda (b)
+                   (mapcar (lambda (c) (list a b c)) xs))
+                 xs))
+              xs)))))
 
-  (defun laat/aoc-count-bags (bag graph)
-    (cl-loop for (child weight) in (gethash bag graph)
-             sum (* weight (laat/aoc-count-bags child graph)) into count
-             finally return (+ 1 count)))
-
-  (thread-last (laat/read-lines "data/7.txt")
-    (mapcan 'laat/aoc-parse-edges)
-    (laat/aoc-make-weighted-graph)
-    (laat/aoc-count-bags "shiny gold")
-    (+ -1))
+  (laat/aoc-1-2 (laat/aoc-read-numbers-file "data/1-1.txt"))
 #+end_src
 
 #+RESULTS:
-: 54803
+: 155806250
+* Day 2
 
-* Day 6
+#+begin_src emacs-lisp
+  (defun laat/aoc-read-passwords-line (line)
+    (let* ((parts (split-string line ": "))
+           (rule-parts (split-string (car parts) " "))
+           (min-max (mapcar 'string-to-number (split-string (car rule-parts) "-")))
+           (min (car min-max))
+           (max (nth 1 min-max))
+           (character (car (last rule-parts)))
+           (password (string-join (cdr parts) " ")))
+      (list
+       :min min
+       :max max
+       :character character
+       :password password)))
+
+  (defun laat/aoc-read-passwords-file (filePath)
+    (mapcar 'laat/aoc-read-passwords-line (laat/read-lines filePath)))
+#+end_src
+
+#+RESULTS:
+: laat/aoc-read-passwords-file
 
 ** Part 1
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
-  (thread-last (split-string (laat/read-file "data/6.txt") "\n\n")
-    (mapcar (lambda (group) (apply 'concat (split-string group "\n"))))
-    (mapcar 'cl-remove-duplicates)
-    (mapcar 'length)
+
+  (defun laat/aoc-2-1-is-passowrd-valid-p (line)
+    (let* ((character (plist-get line :character))
+           (max (plist-get line :max))
+           (min (plist-get line :min))
+           (password (plist-get line :password))
+           (occurances (- (length (split-string password character)) 1)))
+      (and (<= min occurances) (>= max occurances))))
+
+  (length
+   (cl-remove-if-not
+    'laat/aoc-2-1-is-passowrd-valid-p
+    (laat/aoc-read-passwords-file "data/2-1.txt")))
+
+#+end_src
+
+#+RESULTS:
+: 398
+
+** Part 2
+
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+
+  (defun laat/aoc-2-2-is-passowrd-valid-p (line)
+    (let* ((character (plist-get line :character))
+           (a (- (plist-get line :min) 1))
+           (b (- (plist-get line :max) 1))
+           (password (plist-get line :password))
+           (a-is-char-p (equal character (substring password a (+ a 1))))
+           (b-is-char-p (equal character (substring password b (+ b 1)))))
+      (xor a-is-char-p b-is-char-p)))
+
+  (length
+   (cl-remove-if-not
+    'laat/aoc-2-2-is-passowrd-valid-p
+     (laat/aoc-read-passwords-file "data/2-1.txt")))
+#+end_src
+
+#+RESULTS:
+: 562
+
+* Day 3
+
+#+begin_src emacs-lisp
+  (defun laat/aoc-read-forest (filePath)
+    (mapcar
+     (lambda (line)
+       (let ((trees (mapcar (lambda (c) (if (equal ?# c) 1 0)) line)))
+         (nconc trees trees))) ;; circular list where 1 is tree
+     (laat/read-lines filePath)))
+#+end_src
+
+#+RESULTS:
+: laat/aoc-read-forest
+
+** Part 1
+
+
+#+begin_src emacs-lisp :exports both
+  (thread-last (laat/aoc-read-forest "data/3-1.txt")
+    (seq-map-indexed (lambda (trees i) (nth (* i 3) trees)))
     (apply '+))
 #+end_src
 
 #+RESULTS:
-: 6630
+: 242
 
 ** Part 2
 
 #+begin_src emacs-lisp :exports both
-  (require 'cl-lib)
-  (defun laat/aoc-count-everyone-said-yes (group)
-    (thread-last (split-string group "\n")
-      (mapcar 'string-to-list)
-      (cl-remove-if-not 'identity)
-      (cl-reduce 'cl-intersection)
-      (length)))
-
-  (thread-last (split-string (laat/read-file "data/6.txt") "\n\n")
-    (mapcar 'laat/aoc-count-everyone-said-yes)
-    (apply '+))
-#+end_src
-
-#+RESULTS:
-: 3437
-
-* Day 5
-
-#+begin_src emacs-lisp
-  (defun laat/aoc-seat-to-int (pass)
-    (thread-last pass
-      (reverse)
-      (mapcar
-       (lambda (c)
-         (cond ((equal c ?F) 0)
-               ((equal c ?B) 1)
-               ((equal c ?L) 0)
-               ((equal c ?R) 1))))
-      (seq-map-indexed 'ash)
+  (defun laat/aoc-count-slope (down right)
+    (thread-last (laat/aoc-read-forest "data/3-1.txt")
+      (seq-map-indexed
+       (lambda (trees i) (if (eq (% i down) 0) (nth (* (/ i down) right) trees) 0)))
       (apply '+)))
-#+end_src
 
-
-#+begin_src emacs-lisp :exports both
-  (list (laat/aoc-seat-to-int "FBFBBFFRLR")
-        (laat/aoc-seat-to-int "BFFFBBFRRR")
-        (laat/aoc-seat-to-int "FFFBBBFRRR")
-        (laat/aoc-seat-to-int "BBFFBBFRLL"))
+  (thread-last '((1 1) (1 3) (1 5) (1 7) (2 1))
+    (mapcar (lambda (slope) (laat/aoc-count-slope (car slope) (nth 1 slope))))
+    (apply '*))
 #+end_src
 
 #+RESULTS:
-| 357 | 567 | 119 | 820 |
+: 2265549792
 
-** Part 1
-
-#+begin_src emacs-lisp :exports both
-  (thread-last "data/5.txt"
-    (laat/read-lines)
-    (mapcar 'laat/aoc-seat-to-int)
-    (apply 'max))
-#+end_src
-
-#+RESULTS:
-: 951
-
-** Part 2
-
-Set difference
-
-#+begin_src emacs-lisp :exports both
-  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "data/5.txt")) '<))
-         (candidates (cdr (butlast seats)))
-         (candidates2 (mapcar (lambda (n) (+ 1 n)) (butlast seats 2))))
-    (- (car (seq-difference candidates candidates2)) 1))
-#+end_src
-
-#+RESULTS:
-: 653
-
-Pairwise
-
-#+begin_src emacs-lisp :exports both
-  (require 'cl-lib)
-  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "data/5.txt")) '<))
-         (pairs (cl-mapcar #'list seats (cl-rest seats)))
-         (missing (car (cl-remove-if (lambda (xs) (equal (+ 1 (car xs)) (nth 1 xs))) pairs))))
-    (+ 1 (car missing)))
-#+end_src
-
-#+RESULTS:
-: 653
 
 * Day 4
 
@@ -503,183 +318,470 @@ Pairwise
 #+RESULTS:
 : 186
 
-* Day 3
+* Day 5
 
 #+begin_src emacs-lisp
-  (defun laat/aoc-read-forest (filePath)
-    (mapcar
-     (lambda (line)
-       (let ((trees (mapcar (lambda (c) (if (equal ?# c) 1 0)) line)))
-         (nconc trees trees))) ;; circular list where 1 is tree
-     (laat/read-lines filePath)))
+  (defun laat/aoc-seat-to-int (pass)
+    (thread-last pass
+      (reverse)
+      (mapcar
+       (lambda (c)
+         (cond ((equal c ?F) 0)
+               ((equal c ?B) 1)
+               ((equal c ?L) 0)
+               ((equal c ?R) 1))))
+      (seq-map-indexed 'ash)
+      (apply '+)))
 #+end_src
 
 #+RESULTS:
-: laat/aoc-read-forest
-
-** Part 1
+: laat/aoc-seat-to-int
 
 
 #+begin_src emacs-lisp :exports both
-  (thread-last (laat/aoc-read-forest "data/3-1.txt")
-    (seq-map-indexed (lambda (trees i) (nth (* i 3) trees)))
+  (list (laat/aoc-seat-to-int "FBFBBFFRLR")
+        (laat/aoc-seat-to-int "BFFFBBFRRR")
+        (laat/aoc-seat-to-int "FFFBBBFRRR")
+        (laat/aoc-seat-to-int "BBFFBBFRLL"))
+#+end_src
+
+#+RESULTS:
+| 357 | 567 | 119 | 820 |
+
+** Part 1
+
+#+begin_src emacs-lisp :exports both
+  (thread-last "data/5.txt"
+    (laat/read-lines)
+    (mapcar 'laat/aoc-seat-to-int)
+    (apply 'max))
+#+end_src
+
+#+RESULTS:
+: 951
+
+** Part 2
+
+Set difference
+
+#+begin_src emacs-lisp :exports both
+  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "data/5.txt")) '<))
+         (candidates (cdr (butlast seats)))
+         (candidates2 (mapcar (lambda (n) (+ 1 n)) (butlast seats 2))))
+    (- (car (seq-difference candidates candidates2)) 1))
+#+end_src
+
+#+RESULTS:
+: 653
+
+Pairwise
+
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+  (let* ((seats (sort (mapcar 'laat/aoc-seat-to-int (laat/read-lines "data/5.txt")) '<))
+         (pairs (cl-mapcar #'list seats (cl-rest seats)))
+         (missing (car (cl-remove-if (lambda (xs) (equal (+ 1 (car xs)) (nth 1 xs))) pairs))))
+    (+ 1 (car missing)))
+#+end_src
+
+#+RESULTS:
+: 653
+
+* Day 6
+
+** Part 1
+
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+  (thread-last (split-string (laat/read-file "data/6.txt") "\n\n")
+    (mapcar (lambda (group) (apply 'concat (split-string group "\n"))))
+    (mapcar 'cl-remove-duplicates)
+    (mapcar 'length)
     (apply '+))
 #+end_src
 
 #+RESULTS:
-: 242
+: 6630
 
 ** Part 2
 
 #+begin_src emacs-lisp :exports both
-  (defun laat/aoc-count-slope (down right)
-    (thread-last (laat/aoc-read-forest "data/3-1.txt")
-      (seq-map-indexed
-       (lambda (trees i) (if (eq (% i down) 0) (nth (* (/ i down) right) trees) 0)))
-      (apply '+)))
+  (require 'cl-lib)
+  (defun laat/aoc-count-everyone-said-yes (group)
+    (thread-last (split-string group "\n")
+      (mapcar 'string-to-list)
+      (cl-remove-if-not 'identity)
+      (cl-reduce 'cl-intersection)
+      (length)))
 
-  (thread-last '((1 1) (1 3) (1 5) (1 7) (2 1))
-    (mapcar (lambda (slope) (laat/aoc-count-slope (car slope) (nth 1 slope))))
-    (apply '*))
+  (thread-last (split-string (laat/read-file "data/6.txt") "\n\n")
+    (mapcar 'laat/aoc-count-everyone-said-yes)
+    (apply '+))
 #+end_src
 
 #+RESULTS:
-: 2265549792
+: 3437
 
-
-* Day 2
+* Day 7
 
 #+begin_src emacs-lisp
-  (defun laat/aoc-read-passwords-line (line)
-    (let* ((parts (split-string line ": "))
-           (rule-parts (split-string (car parts) " "))
-           (min-max (mapcar 'string-to-number (split-string (car rule-parts) "-")))
-           (min (car min-max))
-           (max (nth 1 min-max))
-           (character (car (last rule-parts)))
-           (password (string-join (cdr parts) " ")))
-      (list
-       :min min
-       :max max
-       :character character
-       :password password)))
+  (defun laat/aoc-get-root-bag (str)
+    (when (string-match "\\(.*\\) bag" str)
+      (match-string 1 str)))
 
-  (defun laat/aoc-read-passwords-file (filePath)
-    (mapcar 'laat/aoc-read-passwords-line (laat/read-lines filePath)))
+  (defun laat/aoc-get-child-bag (str)
+    (when (string-match "\\([0-9]+\\) \\(.*\\) bag\\(s\\)?" str)
+      (list (match-string 2 str) (string-to-number (match-string 1 str)))))
+
+  (defun laat/aoc-parse-edges (str)
+    (let* ((parts (mapcan (lambda (s) (split-string s "contain")) (split-string str ",")))
+           (root (laat/aoc-get-root-bag (car parts)))
+           (contents (mapcar 'laat/aoc-get-child-bag (cdr parts))))
+      (mapcar (lambda (c) (cons root c)) contents)))
 #+end_src
 
 #+RESULTS:
-: laat/aoc-read-passwords-file
+: laat/aoc-parse-edges
+
 
 ** Part 1
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/aoc-2-1-is-passowrd-valid-p (line)
-    (let* ((character (plist-get line :character))
-           (max (plist-get line :max))
-           (min (plist-get line :min))
-           (password (plist-get line :password))
-           (occurances (- (length (split-string password character)) 1)))
-      (and (<= min occurances) (>= max occurances))))
+  (defun laat/aoc-make-backwards-graph (edges)
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child) in edges
+             when child
+             do (puthash child (cons parent (gethash child graph)) graph)
+             finally return graph))
 
-  (length
-   (cl-remove-if-not
-    'laat/aoc-2-1-is-passowrd-valid-p
-    (laat/aoc-read-passwords-file "data/2-1.txt")))
+  (defun laat/search-graph (bag graph)
+    (append (gethash bag graph)
+            (mapcan (lambda (c) (laat/search-graph c graph))
+                    (gethash bag graph))))
+
+  (thread-last (laat/read-lines "data/7.txt")
+    (mapcan 'laat/aoc-parse-edges)
+    (laat/aoc-make-backwards-graph)
+    (laat/search-graph "shiny gold")
+    (cl-remove-duplicates)
+    (length))
 
 #+end_src
 
 #+RESULTS:
-: 398
+: 155
 
 ** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/aoc-2-2-is-passowrd-valid-p (line)
-    (let* ((character (plist-get line :character))
-           (a (- (plist-get line :min) 1))
-           (b (- (plist-get line :max) 1))
-           (password (plist-get line :password))
-           (a-is-char-p (equal character (substring password a (+ a 1))))
-           (b-is-char-p (equal character (substring password b (+ b 1)))))
-      (xor a-is-char-p b-is-char-p)))
+  (defun laat/aoc-make-weighted-graph (edges)
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child weight) in edges
+             when weight
+             do (puthash parent (cons (list child weight) (gethash parent graph)) graph)
+             finally return graph))
 
-  (length
-   (cl-remove-if-not
-    'laat/aoc-2-2-is-passowrd-valid-p
-     (laat/aoc-read-passwords-file "data/2-1.txt")))
+  (defun laat/aoc-count-bags (bag graph)
+    (cl-loop for (child weight) in (gethash bag graph)
+             sum (* weight (laat/aoc-count-bags child graph)) into count
+             finally return (+ 1 count)))
+
+  (thread-last (laat/read-lines "data/7.txt")
+    (mapcan 'laat/aoc-parse-edges)
+    (laat/aoc-make-weighted-graph)
+    (laat/aoc-count-bags "shiny gold")
+    (+ -1))
 #+end_src
 
 #+RESULTS:
-: 562
+: 54803
 
-* Day 1
+* Day 8
 
 #+begin_src emacs-lisp
-  (defun laat/aoc-read-numbers-file (filePath)
-    "read file as a list of newline separated numbers"
-    (mapcar 'string-to-number (laat/read-lines filePath)))
+  ;; elisp does not have TCO. Cheating
+  (setq max-lisp-eval-depth 10000)
+  (setq max-specpdl-size 32000)
+
+  (defun laat/aoc-exec (index acc prog visited)
+    (cond ((>= index (length prog)) (list :terminated acc))
+          ((gethash index visited) (list :loop acc ))
+          (t
+           (puthash index t visited)
+           (seq-let (inst v) (nth index prog)
+             (cond ((equal inst "nop") (laat/aoc-exec (+ 1 index) acc prog visited))
+                   ((equal inst "acc") (laat/aoc-exec (+ 1 index) (+ v acc) prog visited))
+                   ((equal inst "jmp") (laat/aoc-exec (+ v index) acc prog visited)))))))
+
+  (defun laat/aoc-parse-program (file-name)
+    (mapcar (lambda (line) (seq-let (inst value) (split-string line " ")
+                             (list inst (string-to-number value))))
+            (laat/read-lines file-name)))
 #+end_src
 
 #+RESULTS:
-: laat/aoc-read-numbers-file
+: laat/aoc-parse-program
+
 
 ** Part 1
 
-=- 2020= trick
-
 #+begin_src emacs-lisp :exports both
-  (require 'cl-lib)
-
-  (defun laat/aoc-1-1 (xs)
-    (apply '* (cl-intersection (mapcar (lambda (arg) (- 2020 arg)) xs) xs)))
-
-  (laat/aoc-1-1 (laat/aoc-read-numbers-file "data/1-1.txt"))
+  (laat/aoc-exec 0 0 (laat/aoc-parse-program "data/8.txt") (make-hash-table :test 'equal))
 #+end_src
 
 #+RESULTS:
-: 658899
+| :loop | 1600 |
 
-cl-loop
+** Part 2
 
 #+begin_src emacs-lisp :exports both
-  (require 'cl-lib)
+  (defun laat/swap-instruction (index program)
+    (let* ((copy (copy-tree program))
+           (line (nth index copy))
+           (inst (car line)))
+      (cond ((equal inst "nop") (setf (car line) "jmp"))
+            ((equal inst "jmp") (setf (car line) "nop")))
+      copy))
 
-  (let* ((data (laat/aoc-read-numbers-file "data/1-1.txt"))
-         (pairs (mapcan (lambda (a) (mapcar (lambda (b) (list a b)) data)) data)))
-    (car (cl-loop for (x y) in pairs
-                  when (eq 2020 (+ x y))
-                  collect (* x y))))
+  (let ((program (laat/aoc-parse-program "data/8.txt")))
+    (cl-loop for i below (length program)
+             for insts = (laat/swap-instruction i program)
+             for res = (laat/aoc-exec 0 0 insts (make-hash-table :test 'equal))
+             until (equal (car res) :terminated)
+             finally return (nth 1 res)))
 
 #+end_src
 
 #+RESULTS:
-: 658899
+: 1543
+
+* Day 9
+
+** Part 1
+
+#+name: day-9-1
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+
+  (defun laat/cartesian-product (a b)
+    (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
+
+  (defun laat/aoc-valid-xmas (pre n numbers)
+    (let* ((preamble (cl-subseq numbers n (+ n pre)))
+           (valid-sums (mapcar (lambda (xs) (apply '+ xs))
+                               (cl-remove-if (lambda (xs) (eq (car xs) (cadr xs)))
+                                             (laat/cartesian-product preamble preamble))))
+           (test (nth (+ n pre) numbers)))
+      (member test valid-sums)))
+
+  (cl-loop with data = (mapcar 'string-to-number (laat/read-lines "data/9.txt"))
+           with preamble = 25
+           for i below (- (length data) preamble)
+           until (not (laat/aoc-valid-xmas preamble i data))
+           finally return (list :i (+ i preamble) :value (nth (+ i preamble) data)))
+#+end_src
+
+#+RESULTS: day-9-1
+| :i | 562 | :value | 144381670 |
+
+** Part 2
+
+#+begin_src emacs-lisp :var part1=day-9-1 :exports both
+  (defun laat/has-sum (needle numbers)
+    (cl-loop for n in numbers
+             collect n into res1
+             sum n into res2
+             until (>= res2 needle)
+             finally return (cond ((eq res2 needle) res1))))
+
+  (cl-loop with numbers = (mapcar 'string-to-number (laat/read-lines "data/9.txt"))
+           with needle = (plist-get part1 :value)
+           with needle-i = (plist-get part1 :i)
+           for i below needle-i
+           for r = (laat/has-sum needle (cl-subseq numbers i needle-i))
+           until r
+           finally return (+ (apply 'max r) (apply 'min r)))
+
+#+end_src
+
+#+RESULTS:
+: 20532569
+
+* Day 10
+
+** Part 1
+#+begin_src emacs-lisp :exports both
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (numbers (sort (cons 0 (cons (+ 3 (apply 'max data)) data)) '<))
+         (pairs (cl-mapcar #'list numbers (cl-rest numbers)))
+         (diffs (mapcar (lambda (xs) (- (cadr xs) (car xs))) pairs)))
+    (* (cl-count-if (lambda (n) (eq n 3)) diffs)
+       (cl-count-if (lambda (n) (eq n 1)) diffs)))
+#+end_src
+
+#+RESULTS:
+: 2516
 
 ** Part 2
 
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/aoc-1-2 (xs)
-    (apply '*
-           (car
-            (cl-remove-if
-             (lambda (x) (not (equal (apply '+ x) 2020)))
-             (mapcan
-              (lambda (a)
-                (mapcan
-                 (lambda (b)
-                   (mapcar (lambda (c) (list a b c)) xs))
-                 xs))
-              xs)))))
+  (defun laat/get-valid-next-number (i numbers)
+    (cl-loop with current = (nth i numbers)
+             for n in (nthcdr (+ i 1) numbers)
+             when (<= n (+ 3 current))
+             collect n))
 
-  (laat/aoc-1-2 (laat/aoc-read-numbers-file "data/1-1.txt"))
+  (defun laat/aoc-make-plug-edges (numbers)
+    (mapcan 'identity ;; flatten 1 level
+            (seq-map-indexed
+             (lambda (parent i)
+               (mapcar (lambda (child) (list parent child))
+                       (laat/get-valid-next-number i numbers)))
+             numbers)))
+
+  (defun laat/aoc-make-graph (edges)
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child) in edges
+             when child
+             do (puthash parent (cons child (gethash parent graph)) graph)
+             finally return graph))
+
+  (defun laat/count-paths-to-sink (n sink graph mem)
+    (cond
+     ((eq sink n) 1)
+     ((gethash n mem) (gethash n mem)) ;; already counted
+     (t
+      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink graph mem))
+                                   (gethash n graph)))))
+        (puthash n res mem)
+        res))))
+
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (start 0)
+         (sink (+ 3 (apply 'max data)))
+         (numbers (sort (cons start (cons sink data)) '<))
+         (edges (laat/aoc-make-plug-edges numbers)))
+    (laat/count-paths-to-sink start sink
+                              (laat/aoc-make-graph edges)
+                              (make-hash-table :test 'eq)))
 #+end_src
 
 #+RESULTS:
-: 155806250
+: 296196766695424
+
+** Part 2 (non-graph)
+
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+
+  (defun laat/get-next-plugs (current numbers)
+    (cl-loop for next in numbers
+             when (and (> next current) (<= next (+ 3 current)))
+             collect next))
+
+  (defun laat/count-paths-to-sink (n sink numbers mem)
+    (cond
+     ((eq sink n) 1)
+     ((gethash n mem) (gethash n mem)) ;; already counted
+     (t
+      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink numbers mem))
+                                   (laat/get-next-plugs n numbers)))))
+        (puthash n res mem)
+        res))))
+
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (sink (+ 3 (apply 'max data)))
+         (numbers (cons sink data)))
+    (laat/count-paths-to-sink 0 sink numbers
+                              (make-hash-table :test 'eq)))
+#+end_src
+
+#+RESULTS:
+: 296196766695424
+
+
+* Day 11
+
+** Part 1
+
+#+begin_src emacs-lisp
+  ;; HACK! I think that Emacs is not happy with the amount of garbage
+  ;; and slows everything down.
+
+  (setq gc-cons-threshold most-positive-fixnum
+        gc-cons-percentage 0.6)
+#+end_src
+
+#+begin_src emacs-lisp
+
+  (defun laat/seat (pos) (seq-let (i j) pos (format "%d_%d" i j)))
+  (defun laat/count-occupied-seats (seats)
+    (cl-loop for v being the hash-values of seats
+             count v))
+  (defun laat/count-occupied-ajacents (seat seats ajacents)
+    (cl-loop for ajacent in (gethash seat ajacents)
+             collect ajacent))
+  (defun laat/make-ajacent-square (pos)
+    (thread-last (laat/cross
+                  (cl-loop for i from (- (car pos) 1) to (+ (car pos) 1) collect i)
+                  (cl-loop for i from (- (cadr pos) 1) to (+ (cadr pos) 1) collect i))
+      (cl-remove-if (lambda (ajacent) (equal ajacent pos)))
+      (mapcar 'laat/seat)))
+
+
+  (let* ((lines (mapcar 'laat/string-to-char (laat/read-lines "data/11.txt")))
+         (rows (laat/range (length lines)))
+         (cols (laat/range (length (car lines))))
+         (seat-list
+          (mapcar (lambda (pos) (list (laat/seat pos) t))
+                  (cl-remove-if-not
+                   (lambda (pos) (seq-let (i j) pos (eq ?L (nth j (nth i lines)))))
+                   (laat/cross rows cols))))
+         (seats (laat/make-dict seat-list :test 'equal))
+         (ajacent
+          (cl-loop for square in (laat/cross rows cols)
+                   for seat = (laat/seat square)
+                   when (gethash seat seats) ;; is seat
+                   collect (list seat (cl-remove-if-not
+                                       (lambda (s) (gethash s seats)) ;; is seatt
+                                       (laat/make-ajacent-square square)))
+                   into as
+                   finally return (laat/make-dict as :test 'equal))))
+
+    (cl-loop
+     with count-end = 0 ;; after the do block
+     while (not (eq count-end count-start))
+     for count-start = (laat/count-occupied-seats seats) ;; before the do block
+     do (cl-loop
+         with step_data =
+         (cl-loop for seat in (mapcar 'car seat-list)
+                  for occupied-p = (gethash seat seats)
+                  for ajacent-count = (cl-loop for ajacent in (gethash seat ajacent)
+                                               count (gethash ajacent seats))
+                  collect (list seat occupied-p ajacent-count))
+         for (seat occupied-p ajacent-count) in step_data
+         do (cond ((and occupied-p (>= ajacent-count 4)) (puthash seat nil seats))
+                  ((and (not occupied-p) (eq ajacent-count 0)) (puthash seat t seats)))
+         finally (setf count-end (laat/count-occupied-seats seats)))
+     finally return (laat/count-occupied-seats seats)))
+
+#+end_src
+
+Remove GC hack
+#+begin_src emacs-lisp
+  (setq gc-cons-threshold 800000
+        gc-cons-percentage 0.1)
+#+end_src
+
+** Part 2
+#+html: <details> <summary>The moment you realize that you have modelled it wrong, and have to restart for part 2</summary>
+[[./day-11-part-2.gif]]
+#+html: </details>
+
+
