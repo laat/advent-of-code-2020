@@ -26,6 +26,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+RESULTS:
 : laat/read-lines
+#+html: </details>
 
 * Day 1
 
