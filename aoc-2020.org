@@ -780,8 +780,7 @@ Remove GC hack
 #+end_src
 
 ** Part 2
-#+html: <details> <summary>The moment you realize that you have modelled it wrong, and have to restart for part 2</summary>
+
+The moment you realize that you have modelled it wrong, and have to restart for part 2
+
 [[./day-11-part-2.gif]]
-#+html: </details>
-
-
