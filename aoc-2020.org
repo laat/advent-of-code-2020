@@ -29,6 +29,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 * Day 1
 
+#+html: <details> <summary>Click to expand!</summary>
 #+begin_src emacs-lisp
   (defun laat/aoc-read-numbers-file (filePath)
     "read file as a list of newline separated numbers"
@@ -93,7 +94,9 @@ cl-loop
 
 #+RESULTS:
 : 155806250
+#+html: </details>
 * Day 2
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
   (defun laat/aoc-read-passwords-line (line)
@@ -163,7 +166,9 @@ cl-loop
 #+RESULTS:
 : 562
 
+#+html: </details>
 * Day 3
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
   (defun laat/aoc-read-forest (filePath)
@@ -207,7 +212,9 @@ cl-loop
 : 2265549792
 
 
+#+html: </details>
 * Day 4
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
     (defun laat/aoc-read-passport-strings (file-path)
@@ -318,7 +325,9 @@ cl-loop
 #+RESULTS:
 : 186
 
+#+html: </details>
 * Day 5
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
   (defun laat/aoc-seat-to-int (pass)
@@ -387,7 +396,9 @@ Pairwise
 #+RESULTS:
 : 653
 
+#+html: </details>
 * Day 6
+#+html: <details> <summary>Click to expand!</summary>
 
 ** Part 1
 
@@ -422,7 +433,9 @@ Pairwise
 #+RESULTS:
 : 3437
 
+#+html: </details>
 * Day 7
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
   (defun laat/aoc-get-root-bag (str)
@@ -500,7 +513,9 @@ Pairwise
 #+RESULTS:
 : 54803
 
+#+html: </details>
 * Day 8
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
   ;; elisp does not have TCO. Cheating
@@ -559,7 +574,9 @@ Pairwise
 #+RESULTS:
 : 1543
 
+#+html: </details>
 * Day 9
+#+html: <details> <summary>Click to expand!</summary>
 
 ** Part 1
 
@@ -611,7 +628,9 @@ Pairwise
 #+RESULTS:
 : 20532569
 
+#+html: </details>
 * Day 10
+#+html: <details> <summary>Click to expand!</summary>
 
 ** Part 1
 #+begin_src emacs-lisp :exports both
@@ -706,7 +725,9 @@ Pairwise
 : 296196766695424
 
 
+#+html: </details>
 * Day 11
+#+html: <details> <summary>Click to expand!</summary>
 
 ** Part 1
 
@@ -781,3 +802,5 @@ Remove GC hack
 The moment you realize that you have modelled it wrong, and have to restart for part 2
 
 [[./day-11-part-2.gif]]
+
+#+html: </details>
