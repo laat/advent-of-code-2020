@@ -4,6 +4,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 * Helpers
 
+#+html: <details> <summary>Click to expand!</summary>
 #+begin_src emacs-lisp
   (require 'cl-lib)
   (defun laat/cross (a b) (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
