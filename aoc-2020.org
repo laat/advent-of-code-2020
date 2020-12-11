@@ -735,114 +735,38 @@ Pairwise
 ** Part 1
 
 #+begin_src emacs-lisp
-  ;; HACK! I think that Emacs is not happy with the amount of garbage
-  ;; and slows everything down.
-
-  (setq gc-cons-threshold most-positive-fixnum
-        gc-cons-percentage 0.6)
-#+end_src
-
-#+begin_src emacs-lisp
-
-  (defun laat/seat (pos) (seq-let (i j) pos (format "%d_%d" i j)))
-  (defun laat/count-occupied-seats (seats)
-    (cl-loop for v being the hash-values of seats
-             count v))
-  (defun laat/make-ajacent-square (pos)
-    (thread-last (laat/cross
-                  (cl-loop for i from (- (car pos) 1) to (+ (car pos) 1) collect i)
-                  (cl-loop for i from (- (cadr pos) 1) to (+ (cadr pos) 1) collect i))
-      (cl-remove-if (lambda (ajacent) (equal ajacent pos)))
-      (mapcar 'laat/seat)))
-
-
-  (let* ((lines (mapcar 'laat/string-to-char (laat/read-lines "data/11-example.txt")))
-         (rows (laat/range (length lines)))
-         (cols (laat/range (length (car lines))))
-         (seat-list
-          (mapcar (lambda (pos) (list (laat/seat pos) t))
-                  (cl-remove-if-not
-                   (lambda (pos) (seq-let (i j) pos (eq ?L (nth j (nth i lines)))))
-                   (laat/cross rows cols))))
-         (seats (laat/make-dict seat-list :test 'equal))
-         (ajacent
-          (cl-loop for square in (laat/cross rows cols)
-                   for seat = (laat/seat square)
-                   when (gethash seat seats) ;; is seat
-                   collect (list seat (cl-remove-if-not
-                                       (lambda (s) (gethash s seats)) ;; is seatt
-                                       (laat/make-ajacent-square square)))
-                   into as
-                   finally return (laat/make-dict as :test 'equal))))
-
-    (cl-loop
-     with count-end = 0 ;; after the do block
-     while (not (eq count-end count-start))
-     for count-start = (laat/count-occupied-seats seats) ;; before the do block
-     do (cl-loop
-         with step_data =
-         (cl-loop for seat in (mapcar 'car seat-list)
-                  for occupied-p = (gethash seat seats)
-                  for ajacent-count = (cl-loop for ajacent in (gethash seat ajacent)
-                                               count (gethash ajacent seats))
-                  collect (list seat occupied-p ajacent-count))
-         for (seat occupied-p ajacent-count) in step_data
-         do (cond ((and occupied-p (>= ajacent-count 4)) (puthash seat nil seats))
-                  ((and (not occupied-p) (eq ajacent-count 0)) (puthash seat t seats)))
-         finally (setf count-end (laat/count-occupied-seats seats)))
-     collect (list count-start count-end)))
-
-#+end_src
-
-#+RESULTS:
-| 71 | 20 |
-| 20 | 51 |
-| 51 | 30 |
-| 30 | 37 |
-| 37 | 37 |
-
-Remove GC hack
-#+begin_src emacs-lisp
-  (setq gc-cons-threshold 800000
-        gc-cons-percentage 0.1)
-#+end_src
-
-** Part 1 (2)
-
-#+begin_src emacs-lisp
-  (setq laat/make-adjacent-square-cache (make-hash-table :test 'equal))
   (defun laat/make-adjacent-square (row col layout)
     (cl-loop for i from (- row 1) to (+ row 1)
              append (cl-loop for j from (- col 1) to (+ col 1)
                              unless (or (and (eq row i) (eq col j))
                                         (> 0 i)
                                         (> 0 j)
-                                        (<= (length (elt layout 0)) j))
+                                        (<= (length (aref layout 0)) j)
+                                        (<= (length layout) i))
                              collect (list i j))))
 
   (defun laat/count-taken (layout)
     (cl-loop for (i j) in (laat/cross (laat/range (length layout))
-                                      (laat/range (length (cadr layout))))
-             count (eq :taken (nth j (nth i layout)))))
+                                      (laat/range (length (aref layout 0))))
+             count (eq :taken (aref (aref layout i) j))))
   (defun laat/count-adjacent (i j layout)
     (cl-loop for (i j) in (laat/make-adjacent-square i j layout)
-             count (eq :taken (nth j (nth i layout)))))
+             count (eq :taken (aref (aref layout i) j))))
 
   (defun laat/mutate-layout (layout)
-    (let ((layout (copy-tree layout))
-          (prev-layout (copy-tree layout))
+    (let ((next-layout (cl-copy-tree layout t))
           (squares (laat/cross (laat/range (length layout))
-                               (laat/range (length (cadr layout))))))
+                               (laat/range (length (aref layout 0))))))
       (cl-loop for (i j) in squares
-               when (and (eq (nth j (nth i prev-layout)) :taken)
-                         (<= 4 (laat/count-adjacent i j prev-layout)))
-               do (setf (nth j (nth i layout)) :empty))
+               when (and (eq (aref (aref layout i) j) :taken)
+                         (<= 4 (laat/count-adjacent i j layout)))
+               do (aset (aref next-layout i) j :empty))
 
       (cl-loop for (i j) in squares
-               when (and (eq (nth j (nth i prev-layout)) :empty)
-                         (eq 0 (laat/count-adjacent i j prev-layout)))
-               do (setf (nth j (nth i layout)) :taken))
-      layout))
+               when (and (eq (aref (aref layout i) j) :empty)
+                         (eq 0 (laat/count-adjacent i j layout)))
+               do (aset (aref next-layout i) j :taken))
+      next-layout))
 
   (defun laat/mutate-until-done (layout)
     (cl-loop with count-end = 0 ;; after the do block
@@ -852,25 +776,60 @@ Remove GC hack
              do (setf count-end (laat/count-taken layout))
              finally return layout))
 
-  (thread-last (laat/read-lines "data/11-example.txt")
+  (thread-last (laat/read-lines "data/11.txt")
     (mapcar (lambda (line) (mapcar (lambda (c) (cond ((eq c ?L) :empty))) line)))
     (mapcar (lambda (row) (mapcar (lambda (s) (cond ((eq s :empty) :taken))) row)))
-    ;;    (mapcar (lambda (row) (apply 'vector row)))
+    (mapcar (lambda (row) (apply 'vector row)))
+    ((lambda (x) (apply 'vector x)))
     (laat/mutate-until-done)
     (laat/count-taken))
 #+end_src
 
 #+RESULTS:
-: 37
+: 2346
 
---
+** COMMENT Part 2
+
+
+#+begin_src emacs-lisp
+  (defun laat/count-n (row col layout)
+    (cl-loop for i from 0 to (- row 1)
+             unless (< i 0)
+             when (eq (elt (elt layout i) col) :taken)
+             return 1
+             finally return 0))
+  (defun laat/count-s (row col layout)
+    (cl-loop for i from (+ row 1) to (length layout)
+             unless (>= i (length layout))
+             when (eq (elt (elt layout i) col) :taken)
+             return 1
+             finally return 0))
+  (defun laat/count-e (row col layout)
+    (cl-loop for i from (+ col 1) to (length (elt layout 0))
+             when (eq (elt (elt layout i) col) :taken)
+             return 1
+             finally return 0))
+  (defun laat/count-w (row col layout)
+    (cl-loop for i from 0 to (- col 1)
+             when (eq (elt (elt layout i) col) :taken)
+             return 1
+             finally return 0))
+  (defun laat/count-ne (row col layout)
+    (cl-loop for i from 0 to (- row 1)
+             when (eq (elt (elt layout i) col) :taken)
+             return 1
+             finally return 0))
+  (thread-last (laat/read-lines "data/11-example-empty.txt")
+    (mapcar (lambda (line) (mapcar (lambda (c) (cond ((eq c ?L) :empty)
+                                                     ((eq c ?#) :taken)))
+                                   line)))
+    (laat/count-n 3 3))
+
+#+end_src
+
 #+RESULTS:
-: 37
+: 0
 
-** Part 2
-
-The moment you realize that you have modelled it wrong, and have to restart for part 2
-
-[[./day-11-part-2.gif]]
 
 #+html: </details>
+
