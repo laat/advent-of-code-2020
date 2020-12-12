@@ -1,4 +1,5 @@
 #+title: Advent Of Code 2020
+#+PROPERTY: header-args:emacs-lisp :lexical yes
 
 Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
@@ -135,6 +136,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
                                             ((eq :empty s) "L")))))
 #+end_src
 
+#+RESULTS:
+: laat/printable-layout
+
 ** Part 1
 
 ⚠️ Slow!
@@ -159,7 +163,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
              count (eq :taken (aref (aref layout i) j))))
 
   (defun laat/mutate-layout (layout)
-    (let ((next-layout (cl-copy-tree layout t))
+    (let ((next-layout (copy-tree layout t))
           (squares (laat/cross (laat/range (length layout))
                                (laat/range (length (aref layout 0))))))
       (cl-loop for (i j) in squares
@@ -223,7 +227,7 @@ I fell a sleep after 30 minutes of running. It's slooooow as hek but works.
              sum (laat/count-direction row col di dj layout)))
 
   (defun laat/mutate-layout (layout)
-    (let ((next-layout (cl-copy-tree layout t))
+    (let ((next-layout (copy-tree layout t))
           (squares (laat/cross (laat/range (length layout))
                                (laat/range (length (aref layout 0))))))
       (cl-loop for (i j) in squares
