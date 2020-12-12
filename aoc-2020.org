@@ -30,6 +30,23 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+html: </details>
 
+* Day 12
+#+html: <details> <summary>Click to expand!</summary>
+
+** Part 1
+
+#+begin_src emacs-lisp
+
+#+end_src
+
+** Part 2
+
+#+begin_src emacs-lisp
+
+#+end_src
+
+#+html: </details>
+
 * Day 11
 #+html: <details> <summary>Click to expand!</summary>
 
@@ -44,7 +61,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 1
 
-#+begin_src emacs-lisp
+⚠️ Slow!
+
+#+begin_src emacs-lisp :exports both
   (defun laat/make-adjacent-square (row col layout)
     (cl-loop for i from (- row 1) to (+ row 1)
              append (cl-loop for j from (- col 1) to (+ col 1)
@@ -100,9 +119,11 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 2
 
+⚠️ Super Slow!
+
 I fell a sleep after 30 minutes of running. It's slooooow as hek but works.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun laat/count-direction (row col di dj layout)
     (let ((maxi (length layout))
           (maxj (length (elt layout 0))))
