@@ -85,8 +85,8 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+begin_src emacs-lisp
   (defun laat/rot-ting (n e dir deg)
-    (let* ((deg* (cond ((equal dir "R") (* -1 v))
-                       ((equal dir "L") v)
+    (let* ((deg* (cond ((equal dir "R") (* -1 deg))
+                       ((equal dir "L") deg)
                        (t 0)))
            (rot (mod (/ deg* 360.0) 1.0)))
       (cond ((= rot 0.25) (list e (* -1 n)))
