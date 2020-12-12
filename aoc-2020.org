@@ -84,21 +84,21 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 ** Part 2
 
 #+begin_src emacs-lisp
-  (defun laat/rot-ting (n e deg)
-    (let ((rot (mod (/ deg  360.0) 1.0)))
-      (cond
-       ((= rot 0.25) (list e (* -1 n)))
-       ((= rot 0.5) (list (* -1 n) (* -1 e)))
-       ((= rot 0.75) (list (* -1 e) n))
-       ((= rot 0.0) (list n e))
-       (t (format "nope %s" rot)))))
+  (defun laat/rot-ting (n e dir deg)
+    (let* ((deg* (cond ((equal dir "R") (* -1 v))
+                       ((equal dir "L") v)
+                       (t 0)))
+           (rot (mod (/ deg* 360.0) 1.0)))
+      (cond ((= rot 0.25) (list e (* -1 n)))
+            ((= rot 0.5) (list (* -1 n) (* -1 e)))
+            ((= rot 0.75) (list (* -1 e) n))
+            ((= rot 0.0) (list n e))
+            (t (format "nope %s" rot)))))
 
   (defun laat/calc-ne-wp (n e x y lines)
     (cond ((eq (car lines) nil) (list n e))
           (t (seq-let (d v) (car lines)
-               (let* ((rot (laat/rot-ting x y (cond ((equal d "R") (* -1 v))
-                                                    ((equal d "L") v)
-                                                    (t 0))))
+               (let* ((rot (laat/rot-ting x y d v))
                       (rx (car rot))
                       (ry (cadr rot))
                       (dx (* x v))
