@@ -795,27 +795,38 @@ Pairwise
   (defun laat/count-n (row col layout)
     (cl-loop for i from 0 to (- row 1)
              unless (< i 0)
+             unless (>= i (length layout))
              when (eq (elt (elt layout i) col) :taken)
              return 1
              finally return 0))
   (defun laat/count-s (row col layout)
     (cl-loop for i from (+ row 1) to (length layout)
+             unless (< i 0)
              unless (>= i (length layout))
              when (eq (elt (elt layout i) col) :taken)
              return 1
              finally return 0))
   (defun laat/count-e (row col layout)
-    (cl-loop for i from (+ col 1) to (length (elt layout 0))
-             when (eq (elt (elt layout i) col) :taken)
+    (cl-loop for j from (+ col 1) to (length (elt layout 0))
+             unless (< j 0)
+             unless (>= j (length (elt layout 0)))
+             when (eq (elt (elt layout row) col) :taken)
              return 1
              finally return 0))
   (defun laat/count-w (row col layout)
-    (cl-loop for i from 0 to (- col 1)
-             when (eq (elt (elt layout i) col) :taken)
+    (cl-loop for j from 0 to (- col 1)
+             unless (< j 0)
+             unless (>= j (length (elt layout 0)))
+             when (eq (elt (elt layout row) j) :taken)
              return 1
              finally return 0))
   (defun laat/count-ne (row col layout)
-    (cl-loop for i from 0 to (- row 1)
+    (cl-loop for i from 0 to (- col 1)
+             for j = (+ row i)
+             unless (< i 0)
+             unless (< j 0)
+             unless (>= i (length layout))
+             unless (>= j (length (elt layout 0)))
              when (eq (elt (elt layout i) col) :taken)
              return 1
              finally return 0))
@@ -829,6 +840,75 @@ Pairwise
 
 #+RESULTS:
 : 0
+
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+  (defun laat/printable-layout (layout)
+    (cl-loop for line across layout
+             collect (cl-loop for s across line
+                              collect (cond ((eq nil s) ".")
+                                            ((eq :taken s) "#")
+                                            ((eq :empty s) "L")))))
+  (defun laat/count-direction (row col di dj layout)
+    (let ((maxi (length layout))
+          (maxj (length (elt layout 0))))
+      (cl-loop for k in (laat/range (max maxi maxj))
+               for i = (+ (* k di) row)
+               for j = (+ (* k dj) col)
+               unless (< i 0)
+               unless (>= i maxi)
+               unless (< j 0)
+               unless (>= j maxj)
+               unless (and (eq row i) (eq col j))
+               for el = (elt (elt layout i) j)
+               when (not (eq el nil))
+               return (cond ((eq el :taken) 1)
+                            ((eq el :empty) 0))
+               finally return 0
+               )))
+  (defun laat/count-directions (row col layout)
+    (cl-loop for (di dj) in '((+1 0) (-1 0) (0 +1) (0 -1)
+                              (-1 -1) (+1 -1) (+1 +1) (-1 +1))
+             sum (laat/count-direction row col di dj layout)))
+
+  (defun laat/mutate-layout (layout)
+    (let ((next-layout (cl-copy-tree layout t))
+          (squares (laat/cross (laat/range (length layout))
+                               (laat/range (length (aref layout 0))))))
+      (cl-loop for (i j) in squares
+               when (and (eq (aref (aref layout i) j) :taken)
+                         (<= 5 (laat/count-directions i j layout)))
+               do (aset (aref next-layout i) j :empty))
+
+      (cl-loop for (i j) in squares
+               when (and (eq (aref (aref layout i) j) :empty)
+                         (eq 0 (laat/count-directions i j layout)))
+               do (aset (aref next-layout i) j :taken))
+      next-layout))
+
+  (defun laat/mutate-until-done (layout)
+    (cl-loop with count-end = 0 ;; after the do block
+             while (not (eq count-end count-start))
+             for count-start = (laat/count-taken layout) ;; before the do block
+             do (setf layout (laat/mutate-layout layout))
+             do (setf count-end (laat/count-taken layout))
+             finally return layout))
+
+  (thread-last (laat/read-lines "data/11.txt")
+    (mapcar (lambda (line) (mapcar (lambda (c) (cond ((eq c ?L) :empty)
+                                                     ((eq c ?#) :taken)))
+                                   line)))
+    (mapcar (lambda (row) (mapcar (lambda (s) (cond ((eq s :empty) :taken))) row)))
+    (mapcar (lambda (row) (apply 'vector row)))
+    ((lambda (x) (apply 'vector x)))
+    (laat/mutate-until-done)
+    (laat/count-taken))
+  ;; )
+#+end_src
+
+#+RESULTS:
+: 2111
+
 
 
 #+html: </details>
