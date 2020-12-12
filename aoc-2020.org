@@ -51,28 +51,32 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 1
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun laat/rotation (deg)
-    (let ((rot (mod (/ deg  360.0) 1.0)))
-      (cond ((= rot 0.5) '(0 -1))
-            ((= rot 0.25) '(1 0))
-            ((= rot 0.0) '(0 1))
-            ((= rot 0.75) '(-1 0)))))
+    (pcase (mod (/ deg  360.0) 1.0)
+      (`0.5 '(0 -1))
+      (`0.25 '(1 0))
+      (`0.0 '(0 1))
+      (`-0.0 '(0 1))
+      (`0.75 '(-1 0))))
 
   (defun laat/calc-ne (north east deg lines)
-    (cond ((eq (car lines) nil) (list north east))
-          (t (seq-let (d n) (car lines)
-               (let* ((rot (laat/rotation deg))
-                      (dn (* (car rot) n))
-                      (de (* (cadr rot) n))
-                      (rest (cdr lines)))
-                 (cond ((equal d "N") (laat/calc-ne (+ north n) east deg rest))
-                       ((equal d "S") (laat/calc-ne (- north n) east deg rest))
-                       ((equal d "E") (laat/calc-ne north (+ east n) deg rest))
-                       ((equal d "W") (laat/calc-ne north (- east n) deg rest))
-                       ((equal d "F") (laat/calc-ne (+ north dn) (+ east de) deg rest))
-                       ((equal d "R") (laat/calc-ne north east (- deg n) rest))
-                       ((equal d "L") (laat/calc-ne north east (+ deg n) rest))))))))
+    (pcase lines
+      (`nil (list north east))
+      (_ (pcase-let*
+             ((rot (laat/rotation deg))
+              (`((,instruction ,n)) lines)
+              (dn (* (car rot) n))
+              (de (* (cadr rot) n))
+              (rest (cdr lines)))
+           (pcase instruction
+             (`"N" (laat/calc-ne (+ north n) east deg rest))
+             (`"S" (laat/calc-ne (- north n) east deg rest))
+             (`"E" (laat/calc-ne north (+ east n) deg rest))
+             (`"W" (laat/calc-ne north (- east n) deg rest))
+             (`"F" (laat/calc-ne (+ north dn) (+ east de) deg rest))
+             (`"R" (laat/calc-ne north east (- deg n) rest))
+             (`"L" (laat/calc-ne north east (+ deg n) rest)))))))
 
   (thread-last (laat/read-lines "data/12.txt")
     (mapcar 'laat/parse-line)
@@ -86,33 +90,34 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 ** Part 2
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :exports both
   (defun laat/rotate (n e dir deg)
-    (let* ((deg* (cond ((equal dir "R") (* -1 deg))
-                       ((equal dir "L") deg)
-                       (t 0)))
-           (rot (mod (/ deg* 360.0) 1.0)))
-      (cond ((= rot 0.25) (list e (* -1 n)))
-            ((= rot 0.5) (list (* -1 n) (* -1 e)))
-            ((= rot 0.75) (list (* -1 e) n))
-            ((= rot 0.0) (list n e)))))
+    (let ((deg* (cond ((equal dir "R") (* -1 deg))
+                      ((equal dir "L") deg)
+                      (t 0))))
+      (pcase (mod (/ deg* 360.0) 1.0)
+        (`0.25 (list e (* -1 n)))
+        (`0.5 (list (* -1 n) (* -1 e)))
+        (`0.75 (list (* -1 e) n))
+        (`0.0 (list n e)))))
 
   (defun laat/calc-ne-wp (north east x y lines)
-    (cond ((eq (car lines) nil) (list north east))
-          (t (seq-let (d v) (car lines)
-               (let* ((rot (laat/rotate x y d v))
-                      (rx (car rot))
-                      (ry (cadr rot))
-                      (dx (* x v))
-                      (dy (* y v))
-                      (rest (cdr lines)))
-                 (cond ((equal d "N") (laat/calc-ne-wp north east (+ x v) y rest))
-                       ((equal d "S") (laat/calc-ne-wp north east (- x v) y rest))
-                       ((equal d "E") (laat/calc-ne-wp north east x (+ y v) rest))
-                       ((equal d "W") (laat/calc-ne-wp north east x (- y v) rest))
-                       ((equal d "F") (laat/calc-ne-wp (+ north dx) (+ east dy) x y rest))
-                       ((equal d "R") (laat/calc-ne-wp north east rx ry rest))
-                       ((equal d "L") (laat/calc-ne-wp north east rx ry rest))))))))
+    (pcase lines
+      (`nil (list north east))
+      (_ (pcase-let*
+             ((`((,instruction ,n)) lines)
+              (`(,rx ,ry) (laat/rotate x y instruction n))
+              (dx (* x n))
+              (dy (* y n))
+              (rest (cdr lines)))
+           (pcase instruction
+             (`"N" (laat/calc-ne-wp north east (+ x n) y rest))
+             (`"S" (laat/calc-ne-wp north east (- x n) y rest))
+             (`"E" (laat/calc-ne-wp north east x (+ y n) rest))
+             (`"W" (laat/calc-ne-wp north east x (- y n) rest))
+             (`"F" (laat/calc-ne-wp (+ north dx) (+ east dy) x y rest))
+             (`"R" (laat/calc-ne-wp north east rx ry rest))
+             (`"L" (laat/calc-ne-wp north east rx ry rest)))))))
 
   (thread-last (laat/read-lines "data/12.txt")
     (mapcar 'laat/parse-line)
