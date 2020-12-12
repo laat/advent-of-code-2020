@@ -7,7 +7,13 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+html: <details> <summary>Click to expand!</summary>
 #+begin_src emacs-lisp
+  ;; common-lisp emulation
   (require 'cl-lib)
+
+  ;; still not tco in elisp. HACK!
+  (setq max-lisp-eval-depth 10000)
+  (setq max-specpdl-size 32000)
+
   (defun laat/cross (a b) (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
   (defun laat/range (len) (cl-loop for i below len collect i))
   (defun laat/string-to-char (str) (mapcar 'identity str))
@@ -35,10 +41,6 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+html: <details open> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
-  ;; still not tco in elisp. HACK!
-  (setq max-lisp-eval-depth 10000)
-  (setq max-specpdl-size 32000)
-
   (defun laat/parse-line (str)
     (when (string-match "\\([A-Z]+\\)\\([0-9]+\\)" str)
       (list (match-string 1 str) (string-to-number (match-string 2 str)))))
@@ -50,7 +52,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 ** Part 1
 
 #+begin_src emacs-lisp
-  (defun laat/deg-ting (deg)
+  (defun laat/rotation (deg)
     (let ((rot (mod (/ deg  360.0) 1.0)))
       (cond ((= rot 0.5) '(0 -1))
             ((= rot 0.25) '(1 0))
@@ -60,7 +62,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (defun laat/calc-ne (north east deg lines)
     (cond ((eq (car lines) nil) (list north east))
           (t (seq-let (d n) (car lines)
-               (let* ((rot (laat/deg-ting deg))
+               (let* ((rot (laat/rotation deg))
                       (dn (* (car rot) n))
                       (de (* (cadr rot) n))
                       (rest (cdr lines)))
@@ -85,7 +87,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 ** Part 2
 
 #+begin_src emacs-lisp
-  (defun laat/rot-ting (n e dir deg)
+  (defun laat/rotate (n e dir deg)
     (let* ((deg* (cond ((equal dir "R") (* -1 deg))
                        ((equal dir "L") deg)
                        (t 0)))
@@ -98,7 +100,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (defun laat/calc-ne-wp (north east x y lines)
     (cond ((eq (car lines) nil) (list north east))
           (t (seq-let (d v) (car lines)
-               (let* ((rot (laat/rot-ting x y d v))
+               (let* ((rot (laat/rotate x y d v))
                       (rx (car rot))
                       (ry (cadr rot))
                       (dx (* x v))
