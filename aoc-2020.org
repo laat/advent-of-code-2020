@@ -293,55 +293,6 @@ I fell a sleep after 30 minutes of running. It's slooooow as hek but works.
 #+begin_src emacs-lisp :exports both
   (require 'cl-lib)
 
-  (defun laat/get-valid-next-number (i numbers)
-    (cl-loop with current = (nth i numbers)
-             for n in (nthcdr (+ i 1) numbers)
-             when (<= n (+ 3 current))
-             collect n))
-
-  (defun laat/aoc-make-plug-edges (numbers)
-    (mapcan 'identity ;; flatten 1 level
-            (seq-map-indexed
-             (lambda (parent i)
-               (mapcar (lambda (child) (list parent child))
-                       (laat/get-valid-next-number i numbers)))
-             numbers)))
-
-  (defun laat/aoc-make-graph (edges)
-    (cl-loop with graph = (make-hash-table :test 'equal)
-             for (parent child) in edges
-             when child
-             do (puthash parent (cons child (gethash parent graph)) graph)
-             finally return graph))
-
-  (defun laat/count-paths-to-sink (n sink graph mem)
-    (cond
-     ((eq sink n) 1)
-     ((gethash n mem) (gethash n mem)) ;; already counted
-     (t
-      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink graph mem))
-                                   (gethash n graph)))))
-        (puthash n res mem)
-        res))))
-
-  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
-         (start 0)
-         (sink (+ 3 (apply 'max data)))
-         (numbers (sort (cons start (cons sink data)) '<))
-         (edges (laat/aoc-make-plug-edges numbers)))
-    (laat/count-paths-to-sink start sink
-                              (laat/aoc-make-graph edges)
-                              (make-hash-table :test 'eq)))
-#+end_src
-
-#+RESULTS:
-: 296196766695424
-
-** Part 2 (non-graph)
-
-#+begin_src emacs-lisp :exports both
-  (require 'cl-lib)
-
   (defun laat/get-next-plugs (current numbers)
     (cl-loop for next in numbers
              when (and (> next current) (<= next (+ 3 current)))
@@ -351,11 +302,9 @@ I fell a sleep after 30 minutes of running. It's slooooow as hek but works.
     (cond
      ((eq sink n) 1)
      ((gethash n mem) (gethash n mem)) ;; already counted
-     (t
-      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink numbers mem))
-                                   (laat/get-next-plugs n numbers)))))
-        (puthash n res mem)
-        res))))
+     (t (puthash n (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink numbers mem))
+                                     (laat/get-next-plugs n numbers)))
+                 mem))))
 
   (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
          (sink (+ 3 (apply 'max data)))

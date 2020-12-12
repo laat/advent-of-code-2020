@@ -1,0 +1,211 @@
+#    -*- mode: org -*-
+
+
+* Day 11 Part 1
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-11 Fri 19:30
+:ARCHIVE_FILE: ~/git/advent-of-code-2020/aoc-2020.org
+:ARCHIVE_OLPATH: Day 11
+:ARCHIVE_CATEGORY: aoc-2020
+:END:
+
+#+begin_src emacs-lisp
+  ;; HACK! I think that Emacs is not happy with the amount of garbage
+  ;; and slows everything down.
+
+  (setq gc-cons-threshold most-positive-fixnum
+        gc-cons-percentage 0.6)
+#+end_src
+
+#+begin_src emacs-lisp
+
+  (defun laat/seat (pos) (seq-let (i j) pos (format "%d_%d" i j)))
+  (defun laat/count-occupied-seats (seats)
+    (cl-loop for v being the hash-values of seats
+             count v))
+  (defun laat/make-ajacent-square (pos)
+    (thread-last (laat/cross
+                  (cl-loop for i from (- (car pos) 1) to (+ (car pos) 1) collect i)
+                  (cl-loop for i from (- (cadr pos) 1) to (+ (cadr pos) 1) collect i))
+      (cl-remove-if (lambda (ajacent) (equal ajacent pos)))
+      (mapcar 'laat/seat)))
+
+
+  (let* ((lines (mapcar 'laat/string-to-char (laat/read-lines "data/11-example.txt")))
+         (rows (laat/range (length lines)))
+         (cols (laat/range (length (car lines))))
+         (seat-list
+          (mapcar (lambda (pos) (list (laat/seat pos) t))
+                  (cl-remove-if-not
+                   (lambda (pos) (seq-let (i j) pos (eq ?L (nth j (nth i lines)))))
+                   (laat/cross rows cols))))
+         (seats (laat/make-dict seat-list :test 'equal))
+         (ajacent
+          (cl-loop for square in (laat/cross rows cols)
+                   for seat = (laat/seat square)
+                   when (gethash seat seats) ;; is seat
+                   collect (list seat (cl-remove-if-not
+                                       (lambda (s) (gethash s seats)) ;; is seatt
+                                       (laat/make-ajacent-square square)))
+                   into as
+                   finally return (laat/make-dict as :test 'equal))))
+
+    (cl-loop
+     with count-end = 0 ;; after the do block
+     while (not (eq count-end count-start))
+     for count-start = (laat/count-occupied-seats seats) ;; before the do block
+     do (cl-loop
+         with step_data =
+         (cl-loop for seat in (mapcar 'car seat-list)
+                  for occupied-p = (gethash seat seats)
+                  for ajacent-count = (cl-loop for ajacent in (gethash seat ajacent)
+                                               count (gethash ajacent seats))
+                  collect (list seat occupied-p ajacent-count))
+         for (seat occupied-p ajacent-count) in step_data
+         do (cond ((and occupied-p (>= ajacent-count 4)) (puthash seat nil seats))
+                  ((and (not occupied-p) (eq ajacent-count 0)) (puthash seat t seats)))
+         finally (setf count-end (laat/count-occupied-seats seats)))
+     collect (list count-start count-end)))
+
+#+end_src
+
+#+RESULTS:
+| 71 | 20 |
+| 20 | 51 |
+| 51 | 30 |
+| 30 | 37 |
+| 37 | 37 |
+
+Remove GC hack
+#+begin_src emacs-lisp
+  (setq gc-cons-threshold 800000
+        gc-cons-percentage 0.1)
+#+end_src
+
+
+* Day 11 Part 1 (take 2)
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-11 Fri 15:59
+:ARCHIVE_FILE: ~/git/advent-of-code-2020/aoc-2020.org
+:ARCHIVE_OLPATH: Day 11
+:ARCHIVE_CATEGORY: aoc-2020
+:END:
+#+html: <details> <summary>The moment you realize that you have modelled it wrong, and have to restart for part 2</summary>
+[[./day-11-part-2.gif]]
+#+html: </details>
+
+#+begin_src emacs-lisp
+(mapcar 'list (laat/read-lines "data/11-example.txt"))
+#+end_src
+
+#+RESULTS:
+| L.LL.LL.LL |
+| LLLLLLL.LL |
+| L.L.L..L.. |
+| LLLL.LL.LL |
+| L.LL.LL.LL |
+| L.LLLLL.LL |
+| ..L.L..... |
+| LLLLLLLLLL |
+| L.LLLLLL.L |
+| L.LLLLL.LL |
+
+#+begin_src emacs-lisp
+  (defun laat/read-seats (file-name)
+    (cl-loop for line in (laat/read-lines file-name)
+             collect (cl-loop for c across line
+                              collect (cond ((eq c ?L) (list :seat t))
+                                            ((eq c ?.) (list :____ nil))))))
+  (defun laat/seat-p (i j seats) (eq (car (nth j (nth i seats))) :seat))
+  (defun laat/taken-seat-p (i j seats) (plist-get (nth j (nth i seats)) :seat))
+  (defun laat/set-seat (i j taken seats) (setf (nth i (nth j seats)) (list :seat taken)))
+  (defun laat/count-ajacent-taken (row col seats)
+    (cl-loop for i from (- row 1) to (+ row 1)
+             sum (cl-loop for j from (- col 1) to (+ col 1)
+                          unless (or (and (eq row i) (eq col j))
+                                     (> 0 i)
+                                     (> 0 j))
+                          count (laat/taken-seat-p i j seats))))
+
+  (let* ((seats (laat/read-seats "data/11-example.txt")))
+    (cl-loop for (i j count taken) in (cl-loop for row below (length seats)
+                                               append (cl-loop for col below (length (car seats))
+                                                               when (laat/seat-p row col seats)
+                                                               collect (list row col
+                                                                             (laat/count-ajacent-taken row col seats)
+                                                                             (laat/taken-seat-p row col seats))))
+             do (laat/set-seat i j (cond ((and taken (>= 4 count)) nil)
+                                         ((and (not taken) (eq 0 count)) t)) seats))
+    (cl-loop for row below (length seats)
+             sum (cl-loop for col below (length (car seats))
+                          count (laat/taken-seat-p row col seats))))
+    ;; (cl-loop for row below (length seats)
+    ;;          append (cl-loop for col below (length (car seats))
+    ;;                          when (laat/seat-p row col seats)
+    ;;                          collect (list row col
+    ;;                                        (laat/count-ajacent-taken row col seats)
+    ;;                                        (laat/taken-seat-p row col seats))))  )
+
+#+end_src
+
+#+RESULTS:
+: 26
+
+
+#+html: </details>
+
+* Day 9 Part 2
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-12 Sat 12:36
+:ARCHIVE_FILE: ~/git/advent-of-code-2020/aoc-2020.org
+:ARCHIVE_OLPATH: Day 10
+:ARCHIVE_CATEGORY: aoc-2020
+:END:
+
+#+begin_src emacs-lisp :exports both
+  (require 'cl-lib)
+
+  (defun laat/get-valid-next-number (i numbers)
+    (cl-loop with current = (nth i numbers)
+             for n in (nthcdr (+ i 1) numbers)
+             when (<= n (+ 3 current))
+             collect n))
+
+  (defun laat/aoc-make-plug-edges (numbers)
+    (mapcan 'identity ;; flatten 1 level
+            (seq-map-indexed
+             (lambda (parent i)
+               (mapcar (lambda (child) (list parent child))
+                       (laat/get-valid-next-number i numbers)))
+             numbers)))
+
+  (defun laat/aoc-make-graph (edges)
+    (cl-loop with graph = (make-hash-table :test 'equal)
+             for (parent child) in edges
+             when child
+             do (puthash parent (cons child (gethash parent graph)) graph)
+             finally return graph))
+
+  (defun laat/count-paths-to-sink (n sink graph mem)
+    (cond
+     ((eq sink n) 1)
+     ((gethash n mem) (gethash n mem)) ;; already counted
+     (t
+      (let ((res (apply '+ (mapcar (lambda (c) (laat/count-paths-to-sink c sink graph mem))
+                                   (gethash n graph)))))
+        (puthash n res mem)
+        res))))
+
+  (let* ((data (mapcar 'string-to-number (laat/read-lines "data/10.txt")))
+         (start 0)
+         (sink (+ 3 (apply 'max data)))
+         (numbers (sort (cons start (cons sink data)) '<))
+         (edges (laat/aoc-make-plug-edges numbers)))
+    (laat/count-paths-to-sink start sink
+                              (laat/aoc-make-graph edges)
+                              (make-hash-table :test 'eq)))
+#+end_src
+
+#+RESULTS:
+: 296196766695424
+
