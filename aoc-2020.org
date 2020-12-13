@@ -56,53 +56,167 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 2305
 
-#+html: </details>
 
-** COMMENT Part 2
+** Part 2 - Lazy Edition
+*** Parse data
+
 #+begin_src emacs-lisp :exports both
   (defun laat/read-pattern (file-name)
     (let* ((data (seq-map-indexed 'list (split-string (cadr (laat/read-lines file-name)) ",")))
            (data2 (cl-remove-if (lambda (x) (equal "x" (car x))) data)))
-      (mapcar (lambda (x) (list (string-to-number (car x)) (cadr x))) data2)))
+      (mapcar (lambda (x) (list (cadr x) (string-to-number (car x)))) data2)))
 
   (laat/read-pattern "data/13-example.txt")
 #+end_src
 
 #+RESULTS:
-|  7 | 0 |
-| 13 | 1 |
-| 59 | 4 |
-| 31 | 6 |
-| 19 | 7 |
+| 0 |  7 |
+| 1 | 13 |
+| 4 | 59 |
+| 6 | 31 |
+| 7 | 19 |
+
+*** Create modulo equations for CRT
+
+[[https://en.wikipedia.org/wiki/Chinese_remainder_theorem][Chinese remainder theorem]]
 
 #+begin_src emacs-lisp :exports both
-  (cl-loop for i from 1000
-           when (eq (% i 7) 0)
-           when (eq (% (+ 1 i) 13) 0)
-           when (eq (% (+ 4 i) 59) 0)
-           when (eq (% (+ 6 i) 31) 0)
-           when (eq (% (+ 7 i) 19) 0)
-           return i)
+  (defun laat/to-modulo-equation (the-route)
+    (pcase-let* ((`(,offset ,route) the-route)
+                 (a (- route offset)))
+      (cl-loop while (< a 0)
+               do (setf a (+ a route)))
+      (format "x = %s mod %s" a route)))
+
+  (defun laat/to-modulo-equations (routes)
+    (string-join (mapcar 'laat/to-modulo-equation routes) "\n"))
+
+  (laat/to-modulo-equations (laat/read-pattern "data/13-example.txt"))
+#+end_src
+
+#+RESULTS:
+: x = 7 mod 7
+: x = 12 mod 13
+: x = 55 mod 59
+: x = 25 mod 31
+: x = 12 mod 19
+
+*** Controlling Firefox
+
+Install [[https://github.com/xuchunyang/marionette.el][marionette.el]] using [[https://github.com/jwiegley/use-package][use-package]] and [[https://github.com/quelpa][quelpa]]
+
+#+begin_src emacs-lisp
+  (use-package marionette
+    :quelpa
+    (marionette
+     :fetcher github
+     :repo "xuchunyang/marionette.el"
+     :commit "516bbcec25edbaf0feaf3aad3e442d581881c5ee"))
+#+end_src
+
+Open Firefox with marionette protocol enabled on OS X:
+
+#+begin_src shell :eval never
+open -a Firefox --args -marionette
+#+end_src
+
+The solver function:
+
+#+begin_src emacs-lisp
+  (defun $select (proc selector)
+    (cdr (car (cdr (assoc 'value (marionette-request
+                                  proc 'FindElement
+                                  :value selector :using "css selector"))))))
+  (defun laat/solve-crt (equations)
+    (marionette-with-page
+     (lambda (proc)
+       ;; goto solver
+       (marionette-request
+        proc 'Navigate
+        :url "https://davidwees.com/chineseremaindertheorem/")
+
+       ;; insert text
+       (marionette-request
+        proc 'ElementSendKeys
+        :id ($select proc "#equations")
+        :text equations)
+
+       ;; click submit
+       (marionette-request
+        proc 'ElementClick
+        :id ($select proc "input[type=submit]"))
+
+       ;; get solution
+       (let ((res (marionette-request
+                   proc 'GetElementProperty
+                   :id ($select proc "#solution")
+                   :name "value")))
+         (cdr (assoc 'value res))))))
+
+#+end_src
+
+*** Solve the example
+
+Example
+
+#+begin_src emacs-lisp :exports both
+  (thread-last (laat/read-pattern "data/13-example.txt")
+    (laat/to-modulo-equations)
+    (laat/solve-crt))
 #+end_src
 
 #+RESULTS:
 : 1068781
 
-Never terminates
+*** Solve my problem?
 
-#+begin_src emacs-lisp :eval never
-  (cl-loop for i from 100000000000000
-           when (eq (% i 13) 0)
-           when (eq (% (+ 7 i) 37) 0)
-           when (eq (% (+ 13 i) 461) 0)
-           when (eq (% (+ 27 i) 17) 0)
-           when (eq (% (+ 32 i) 19) 0)
-           when (eq (% (+ 42 i) 29) 0)
-           when (eq (% (+ 44 i) 739) 0)
-           when (eq (% (+ 54 i) 41) 0)
-           when (eq (% (+ 67 i) 23) 0)
-           return i)
+My data
+
+#+begin_src emacs-lisp :exports both
+(laat/read-file "data/13.txt")
 #+end_src
+
+#+RESULTS:
+: 1001287
+: 13,x,x,x,x,x,x,37,x,x,x,x,x,461,x,x,x,x,x,x,x,x,x,x,x,x,x,17,x,x,x,x,19,x,x,x,x,x,x,x,x,x,29,x,739,x,x,x,x,x,x,x,x,x,41,x,x,x,x,x,x,x,x,x,x,x,x,23
+
+My data becomes these equations:
+
+#+begin_src emacs-lisp :exports both
+  (thread-last (laat/read-pattern "data/13.txt")
+    (laat/to-modulo-equations))
+#+end_src
+
+#+RESULTS:
+: x = 13 mod 13
+: x = 30 mod 37
+: x = 448 mod 461
+: x = 7 mod 17
+: x = 6 mod 19
+: x = 16 mod 29
+: x = 695 mod 739
+: x = 28 mod 41
+: x = 2 mod 23
+
+The website solves it as:
+
+#+begin_src emacs-lisp :exports both
+  (thread-last (laat/read-pattern "data/13.txt")
+    (laat/to-modulo-equations)
+    (laat/solve-crt))
+#+end_src
+
+#+RESULTS:
+: 552612234243418
+
+This is *wrong*!
+
+It should have been =552612234243498=
+
+Time to solve it for real
+
+#+html: </details>
+
 
 * Day 12
 #+html: <details> <summary>Click to expand!</summary>

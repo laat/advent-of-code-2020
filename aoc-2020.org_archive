@@ -209,3 +209,56 @@ Remove GC hack
 #+RESULTS:
 : 296196766695424
 
+
+* COMMENT Part 2
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-13 Sun 23:21
+:ARCHIVE_FILE: ~/git/advent-of-code-2020/aoc-2020.org
+:ARCHIVE_OLPATH: Day 13
+:ARCHIVE_CATEGORY: aoc-2020
+:END:
+#+begin_src emacs-lisp :exports both
+  (defun laat/read-pattern (file-name)
+    (let* ((data (seq-map-indexed 'list (split-string (cadr (laat/read-lines file-name)) ",")))
+           (data2 (cl-remove-if (lambda (x) (equal "x" (car x))) data)))
+      (mapcar (lambda (x) (list (string-to-number (car x)) (cadr x))) data2)))
+
+  (laat/read-pattern "data/13-example.txt")
+#+end_src
+
+#+RESULTS:
+|  7 | 0 |
+| 13 | 1 |
+| 59 | 4 |
+| 31 | 6 |
+| 19 | 7 |
+
+#+begin_src emacs-lisp :exports both
+  (cl-loop for i from (* 7 13 59 31 19)
+           when (eq (% i 7) 0)
+           when (eq (% (+ 1 i) 13) 0)
+           when (eq (% (+ 4 i) 59) 0)
+           when (eq (% (+ 6 i) 31) 0)
+           when (eq (% (+ 7 i) 19) 0)
+           return i)
+#+end_src
+
+#+RESULTS:
+: 4231122
+
+Never terminates
+
+#+begin_src emacs-lisp :eval never
+  (cl-loop for i from 100000000000000
+           when (eq (% i 13) 0)
+           when (eq (% (+ 7 i) 37) 0)
+           when (eq (% (+ 13 i) 461) 0)
+           when (eq (% (+ 27 i) 17) 0)
+           when (eq (% (+ 32 i) 19) 0)
+           when (eq (% (+ 42 i) 29) 0)
+           when (eq (% (+ 44 i) 739) 0)
+           when (eq (% (+ 54 i) 41) 0)
+           when (eq (% (+ 67 i) 23) 0)
+           return i)
+#+end_src
+
