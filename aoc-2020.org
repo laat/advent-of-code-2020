@@ -37,8 +37,75 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+html: </details>
 
-* Day 12
+* Day 13
+
 #+html: <details open> <summary>Click to expand!</summary>
+
+** Part 1
+
+#+begin_src emacs-lisp :exports both
+  (require 'dash)
+  (let* ((data (laat/read-lines "data/13.txt"))
+         (target (string-to-number (car data)))
+         (routes (mapcar 'string-to-number (remove-if (lambda (x) (equal x "x")) (split-string (cadr data) ","))))
+         (nexts (mapcar (lambda (r) (list r (* r (+ 1 (/ target r))))) routes))
+         (next (--min-by (> (cadr it) (cadr other)) nexts) ))
+  (* (car next) (- (cadr next) target)))
+#+end_src
+
+#+RESULTS:
+: 2305
+
+#+html: </details>
+
+** COMMENT Part 2
+#+begin_src emacs-lisp :exports both
+  (defun laat/read-pattern (file-name)
+    (let* ((data (seq-map-indexed 'list (split-string (cadr (laat/read-lines file-name)) ",")))
+           (data2 (cl-remove-if (lambda (x) (equal "x" (car x))) data)))
+      (mapcar (lambda (x) (list (string-to-number (car x)) (cadr x))) data2)))
+
+  (laat/read-pattern "data/13-example.txt")
+#+end_src
+
+#+RESULTS:
+|  7 | 0 |
+| 13 | 1 |
+| 59 | 4 |
+| 31 | 6 |
+| 19 | 7 |
+
+#+begin_src emacs-lisp :exports both
+  (cl-loop for i from 1000
+           when (eq (% i 7) 0)
+           when (eq (% (+ 1 i) 13) 0)
+           when (eq (% (+ 4 i) 59) 0)
+           when (eq (% (+ 6 i) 31) 0)
+           when (eq (% (+ 7 i) 19) 0)
+           return i)
+#+end_src
+
+#+RESULTS:
+: 1068781
+
+Never terminates
+
+#+begin_src emacs-lisp :eval never
+  (cl-loop for i from 100000000000000
+           when (eq (% i 13) 0)
+           when (eq (% (+ 7 i) 37) 0)
+           when (eq (% (+ 13 i) 461) 0)
+           when (eq (% (+ 27 i) 17) 0)
+           when (eq (% (+ 32 i) 19) 0)
+           when (eq (% (+ 42 i) 29) 0)
+           when (eq (% (+ 44 i) 739) 0)
+           when (eq (% (+ 54 i) 41) 0)
+           when (eq (% (+ 67 i) 23) 0)
+           return i)
+#+end_src
+
+* Day 12
+#+html: <details> <summary>Click to expand!</summary>
 
 #+begin_src emacs-lisp
   (defun laat/parse-line (str)
@@ -53,12 +120,12 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+begin_src emacs-lisp :exports both
   (defun laat/rotation (deg)
-    (pcase (mod (/ deg  360.0) 1.0)
-      (`0.5 '(0 -1))
+    (pcase (mod (/ deg 360.0) 1.0)
       (`0.25 '(1 0))
-      (`0.0 '(0 1))
-      (`-0.0 '(0 1))
-      (`0.75 '(-1 0))))
+      (`0.5  '(0 -1))
+      (`0.75 '(-1 0))
+      (`0.0  '(0 1))
+      (`-0.0 '(0 1))))
 
   (defun laat/calc-ne (north east deg lines)
     (pcase lines
@@ -97,9 +164,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
                       (t 0))))
       (pcase (mod (/ deg* 360.0) 1.0)
         (`0.25 (list e (* -1 n)))
-        (`0.5 (list (* -1 n) (* -1 e)))
+        (`0.5  (list (* -1 n) (* -1 e)))
         (`0.75 (list (* -1 e) n))
-        (`0.0 (list n e)))))
+        (`0.0  (list n e)))))
 
   (defun laat/calc-ne-wp (north east x y lines)
     (pcase lines
