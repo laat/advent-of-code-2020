@@ -93,28 +93,33 @@ Parse the program
 
 And use this mask function creator
 
-#+begin_src emacs-lisp :exports both
+#+begin_src emacs-lisp
   (defun laat/make-masker (mask-str)
     (->> mask-str
          (reverse)
          (seq-map-indexed
           (lambda (c i)
             (pcase c
-              (`?1 `(lambda (m) (logior m ,(ash 1 i))))
-              (`?0 `(lambda (m) (logand m ,(lognot (ash 1 i))))))))
+              (`?1 `(lambda (x) (logior x ,(ash 1 i))))
+              (`?0 `(lambda (x) (logand x ,(lognot (ash 1 i))))))))
          (-non-nil)
          (apply '-compose)))
-
-  ;; example data
-  (list
-   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 11)
-   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 101)
-   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 0)
-   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX") 2))
 #+end_src
 
 #+RESULTS:
-| 73 | 101 | 64 | 2 |
+: laat/make-masker
+
+that works
+
+#+begin_src emacs-lisp :exports both
+  (list
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 11)
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 101)
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 0))
+#+end_src
+
+#+RESULTS:
+| 73 | 101 | 64 |
 
 Execute the example
 
@@ -125,10 +130,10 @@ Execute the example
           (instructions (laat/parse-program program-str)))
       (cl-loop for instruction in instructions
                do (pcase instruction
-                    (`(:put ,loc :val ,val)
-                     (puthash loc (funcall mask val) mem))
                     (`(:mask ,mask-str)
-                     (setf mask (laat/make-masker mask-str)))))
+                     (setf mask (laat/make-masker mask-str)))
+                    (`(:put ,loc :val ,val)
+                     (puthash loc (funcall mask val) mem))))
       (cl-loop for val being the hash-values of mem
                sum val)))
 
@@ -160,14 +165,17 @@ Compute my result
          (seq-map-indexed
           (lambda (c i)
             (pcase c
-              (?1 `(lambda (bs)
-                     (-map (lambda (b) (logior b ,(ash 1 i))) bs)))
-              (?X `(lambda (bs)
-                     (append (-map (lambda (b) (logior b ,(ash 1 i))) bs)
-                             (-map (lambda (b) (logand b ,(lognot (ash 1 i)))) bs)))))))
+              (?1 `(lambda (xs)
+                     (-map (lambda (x) (logior x ,(ash 1 i))) xs)))
+              (?X `(lambda (xs)
+                     (append (-map (lambda (x) (logior x ,(ash 1 i))) xs)
+                             (-map (lambda (x) (logand x ,(lognot (ash 1 i)))) xs)))))))
          (-non-nil)
          (apply '-compose)))
 #+end_src
+
+#+RESULTS:
+: laat/make-address-finder
 
 The first example works
 #+begin_src emacs-lisp :exports both
