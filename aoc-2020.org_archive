@@ -262,3 +262,34 @@ Never terminates
            return i)
 #+end_src
 
+
+* COMMENT Elisp implementation of the solver
+:PROPERTIES:
+:ARCHIVE_TIME: 2020-12-14 Mon 00:57
+:ARCHIVE_FILE: ~/git/advent-of-code-2020/aoc-2020.org
+:ARCHIVE_OLPATH: Day 13/Part 2 - Lazy Edition
+:ARCHIVE_CATEGORY: aoc-2020
+:END:
+
+It should take the same input as the website, but produce the correct answer.
+
+Example input:
+
+: x = 7 mod 7
+: x = 12 mod 13
+: x = 55 mod 59
+: x = 25 mod 31
+: x = 12 mod 19
+
+#+begin_src emacs-lisp
+  (defun laat/parse-equation-string (equations)
+    (mapcar
+     (lambda (str)
+       (when (string-match "x = \\([0-9]+\\) mod \\([0-9]+\\)" str)
+         `(,(match-string 1 str) ,(match-string 2 str))))
+     (split-string equations "\n")))
+#+end_src
+
+#+html: </details>
+
+

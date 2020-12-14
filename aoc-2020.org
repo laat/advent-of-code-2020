@@ -58,6 +58,10 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 
 ** Part 2 - Lazy Edition
+Solving the problem by using the online solver available at https://davidwees.com/chineseremaindertheorem/.
+
+But it must be solved in org-mode (this file). To do that I'm controlling Firefox with emacs to paste the data into the form and get the result.
+
 *** Parse data
 
 #+begin_src emacs-lisp :exports both
@@ -168,7 +172,7 @@ Example
 #+RESULTS:
 : 1068781
 
-*** Solve my problem?
+*** Solves my problem?
 
 My data
 
@@ -182,12 +186,13 @@ My data
 
 My data becomes these equations:
 
+#+name: my-equations
 #+begin_src emacs-lisp :exports both
   (thread-last (laat/read-pattern "data/13.txt")
     (laat/to-modulo-equations))
 #+end_src
 
-#+RESULTS:
+#+RESULTS: my-equations
 : x = 13 mod 13
 : x = 30 mod 37
 : x = 448 mod 461
@@ -209,15 +214,85 @@ The website solves it as:
 #+RESULTS:
 : 552612234243418
 
-This is *wrong*!
+[[./day-13-part-2.gif]]
 
-It should have been =552612234243498=
+This is *wrong*! There is a rounding error.
 
-Time to solve it for real
+*** Let's fix the rounding error
+
+By using =BigInt= instead of =Number=. The lines I've changed are marked with =//<--=.
+
+#+begin_src js :var myEquations=my-equations :exports both
+  // a copy of the js source at
+  // https://davidwees.com/chineseremaindertheorem/
+  function calculate(equations) {
+      equations = equations.replace(/ /g, '');
+      equations = equations.toLowerCase();
+      equations = equations.split(/\n/);
+      if (equations[equations.length - 1] == '') {
+          equations.pop();
+      }
+      var regmod = /mod([0-9]*)/;
+      var rega = /=([0-9]*)mod/;
+      var N = BigInt(1);                                               // <--
+      var matches;
+      var n = new Array();
+      var a = new Array();
+      var e = new Array();
+      var tmp;
+      var x = BigInt(0);                                               // <--
+      for (var i = 0; i < equations.length; i++) {
+          matches = regmod.exec(equations[i]);
+          N = BigInt(matches[1]) * N;                                  // <--
+          n[i] = BigInt(matches[1]);                                   // <--
+          matches = rega.exec(equations[i]);
+          a[i] = BigInt(matches[1]);                                   // <--
+      }
+
+      var max = BigInt(1);                                             // <--
+      for (var i in n) {
+          max = n[i] * max;
+      }
+
+      for (i = 0; i < equations.length; i++) {
+          tmp = extended_gcd(n[i], N / n[i]);
+          e[i] = (tmp[1] * N) / n[i];
+      }
+      for (i = 0; i < equations.length; i++) {
+          x += e[i] * a[i];
+      }
+      if (x >= max) {
+          x = x % max;
+      }
+
+      while (x < 0) {
+          x = x + max;
+      }
+
+      return x;
+  }
+
+  function extended_gcd(a, b) {
+      if (a % b == 0) {
+          var temp = new Array(BigInt(0), BigInt(1));                  // <--
+          return temp;
+      } else {
+          var temp = extended_gcd(b, a % b);
+          var temp2 = new Array(temp[1], temp[0] - temp[1] * (a / b)); // <--
+          return temp2;
+      }
+  }
+
+  return calculate(myEquations)
+#+end_src
+
+#+RESULTS:
+: 552612234243498n
+
+*correct*
+
 
 #+html: </details>
-
-
 * Day 12
 #+html: <details> <summary>Click to expand!</summary>
 
