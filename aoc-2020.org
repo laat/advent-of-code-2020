@@ -47,16 +47,15 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+html: </details>
 
 * Day 14
+
 @@html:<a name="day-14-part-1">@@
-** Part 1
 @@html:</a>@@
+** Part 1
 
 With this example:
 
 #+name: example
 #+begin_example
-mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-mem[1] = 0
 mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
 mem[8] = 11
 mem[7] = 101
@@ -87,8 +86,6 @@ Parse the program
 #+end_src
 
 #+RESULTS:
-| (:mask XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX) |
-| (:put 1 :val 0)                              |
 | (:mask XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X) |
 | (:put 8 :val 11)                             |
 | (:put 7 :val 101)                            |
@@ -149,6 +146,68 @@ Compute my result
 
 #+RESULTS:
 : 14925946402938
+
+@@html:<a name="day-14-part-2">@@
+@@html:</a>@@
+** Part 2
+
+*** The address finder
+
+#+begin_src emacs-lisp
+  (defun laat/make-address-finder (mask-str)
+    (->> mask-str
+         (reverse)
+         (seq-map-indexed
+          (lambda (c i)
+            (pcase c
+              (?1 `(lambda (bs)
+                     (-map (lambda (b) (logior b ,(ash 1 i))) bs)))
+              (?X `(lambda (bs)
+                     (append (-map (lambda (b) (logior b ,(ash 1 i))) bs)
+                             (-map (lambda (b) (logand b ,(lognot (ash 1 i)))) bs)))))))
+         (-non-nil)
+         (apply '-compose)))
+#+end_src
+
+The first example works
+#+begin_src emacs-lisp :exports both
+  (-sort '< (funcall (laat/make-address-finder "000000000000000000000000000000X1001X") '(42)))
+#+end_src
+
+#+RESULTS:
+| 26 | 27 | 58 | 59 |
+
+The second example works
+#+begin_src emacs-lisp :exports both
+  (-sort '< (funcall (laat/make-address-finder "00000000000000000000000000000000X0XX") '(26)))
+#+end_src
+
+#+RESULTS:
+| 16 | 17 | 18 | 19 | 24 | 25 | 26 | 27 |
+
+*** Execute
+
+#+begin_src emacs-lisp :var example=example :exports both
+  (defun laat/exec-program (program-str)
+    (let ((mem (make-hash-table :test 'equal))
+          (lookup-address 'identity)
+          (instructions (laat/parse-program program-str)))
+       (cl-loop for instruction in instructions
+                do (pcase instruction
+                     (`(:mask ,mask-str)
+                      (setf lookup-address (laat/make-address-finder mask-str)))
+                     (`(:put ,loc :val ,val)
+                      (cl-loop for address in (funcall lookup-address `(,loc))
+                               do (puthash address val mem)))))
+       (cl-loop for val being the hash-values of mem
+                sum val)))
+
+  (laat/exec-program (laat/read-file "data/14.txt"))
+#+end_src
+
+#+RESULTS:
+: 3706820676200
+
 
 * Day 13
 
