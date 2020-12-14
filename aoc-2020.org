@@ -12,6 +12,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
   ;; awesome utils
   (require 'dash)
+  (require 's)
 
   ;; still no tco in elisp. HACK!
   (setq max-lisp-eval-depth 10000)
