@@ -49,6 +49,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 * Day 14
 @@html:<a name="day-14-part-1">@@
 ** Part 1
+@@html:</a>@@
 
 With this example:
 
