@@ -10,13 +10,22 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   ;; common-lisp emulation
   (require 'cl-lib)
 
-  ;; still not tco in elisp. HACK!
+  ;; awesome utils
+  (require 'dash)
+
+  ;; still no tco in elisp. HACK!
   (setq max-lisp-eval-depth 10000)
   (setq max-specpdl-size 32000)
 
-  (defun laat/cross (a b) (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
-  (defun laat/range (len) (cl-loop for i below len collect i))
-  (defun laat/string-to-char (str) (mapcar 'identity str))
+  (defun laat/cross (a b)
+    (mapcan (lambda (x) (mapcar (lambda (y) (list x y)) b)) a))
+
+  (defun laat/range (len)
+    (cl-loop for i below len collect i))
+
+  (defun laat/string-to-char (str)
+    (mapcar 'identity str))
+
   (defun laat/make-dict (kv-list &rest htargs)
     (cl-loop with dict = (apply 'make-hash-table htargs)
              for (k v) in kv-list
@@ -37,9 +46,112 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+html: </details>
 
+* Day 14
+@@html:<a name="day-14-part-1">@@
+** Part 1
+
+With this example:
+
+#+name: example
+#+begin_example
+mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+mem[1] = 0
+mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
+mem[8] = 11
+mem[7] = 101
+mem[8] = 0
+#+end_example
+
+Parse the program
+
+#+begin_src emacs-lisp :var example=example :exports both
+  (defun laat/parse-line (s)
+    (pcase s
+      ((rx "mask = " (group (+ anything)))
+       (list :mask (match-string 1 s)))
+      ((rx "mem[" (group (+ digit)) "] = " (group (+ digit)))
+       (list
+        :put (string-to-number (match-string 1 s))
+        :val (string-to-number (match-string 2 s))))))
+
+  (defun laat/parse-program (program)
+    (->> program
+         (s-trim)
+         (s-lines)
+         (-map 'laat/parse-line)))
+
+  ;; print example "ast"
+  (mapcar (lambda (s) (list (format "%s"s)))
+          (laat/parse-program example))
+#+end_src
+
+#+RESULTS:
+| (:mask XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX) |
+| (:put 1 :val 0)                              |
+| (:mask XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X) |
+| (:put 8 :val 11)                             |
+| (:put 7 :val 101)                            |
+| (:put 8 :val 0)                              |
+
+And use this mask function creator
+
+#+begin_src emacs-lisp :exports both
+  (defun laat/make-masker (mask-str)
+    (->> mask-str
+         (reverse)
+         (seq-map-indexed
+          (lambda (c i)
+            (pcase c
+              (`?1 `(lambda (m) (logior m ,(ash 1 i))))
+              (`?0 `(lambda (m) (logand m ,(lognot (ash 1 i))))))))
+         (-non-nil)
+         (apply '-compose)))
+
+  ;; example data
+  (list
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 11)
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 101)
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 0)
+   (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX") 2))
+#+end_src
+
+#+RESULTS:
+| 73 | 101 | 64 | 2 |
+
+Execute the example
+
+#+begin_src emacs-lisp :var example=example :exports both
+  (defun laat/exec-program (program-str)
+    (let ((mem (make-hash-table :test 'equal))
+          (mask 'identity)
+          (instructions (laat/parse-program program-str)))
+      (cl-loop for instruction in instructions
+               do (pcase instruction
+                    (`(:put ,loc :val ,val)
+                     (puthash loc (funcall mask val) mem))
+                    (`(:mask ,mask-str)
+                     (setf mask (laat/make-masker mask-str)))))
+      (cl-loop for val being the hash-values of mem
+               sum val)))
+
+  (laat/exec-program example)
+#+end_src
+
+#+RESULTS:
+: 165
+
+Compute my result
+
+#+begin_src emacs-lisp :exports both
+  (laat/exec-program (laat/read-file "data/14.txt"))
+#+end_src
+
+#+RESULTS:
+: 14925946402938
+
 * Day 13
 
-#+html: <details open> <summary>Click to expand!</summary>
+#+html: <details> <summary>Click to expand!</summary>
 
 ** Part 1
 
