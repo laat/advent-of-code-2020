@@ -48,6 +48,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+html: </details>
 
 * Day 14
+#+html: <details open> <summary>Click to expand!</summary>
 
 @@html:<a name="day-14-part-1">@@
 @@html:</a>@@
@@ -65,22 +66,26 @@ mem[8] = 0
 
 Parse the program
 
-#+begin_src emacs-lisp :var example=example :exports both
+#+begin_src emacs-lisp
   (defun laat/parse-line (s)
     (pcase s
       ((rx "mask = " (group (+ anything)))
        (list :mask (match-string 1 s)))
       ((rx "mem[" (group (+ digit)) "] = " (group (+ digit)))
-       (list
-        :put (string-to-number (match-string 1 s))
-        :val (string-to-number (match-string 2 s))))))
+       (list :put (string-to-number (match-string 1 s))
+             :val (string-to-number (match-string 2 s))))))
 
   (defun laat/parse-program (program)
     (->> program
          (s-trim)
          (s-lines)
          (-map 'laat/parse-line)))
+#+end_src
 
+#+RESULTS:
+: laat/parse-program
+
+#+begin_src emacs-lisp :exports results :var example=example
   ;; print example "ast"
   (mapcar (lambda (s) (list (format "%s"s)))
           (laat/parse-program example))
@@ -91,8 +96,6 @@ Parse the program
 | (:put 8 :val 11)                             |
 | (:put 7 :val 101)                            |
 | (:put 8 :val 0)                              |
-
-And use this mask function creator
 
 #+begin_src emacs-lisp
   (defun laat/make-masker (mask-str)
@@ -110,9 +113,7 @@ And use this mask function creator
 #+RESULTS:
 : laat/make-masker
 
-that works
-
-#+begin_src emacs-lisp :exports both
+#+begin_src emacs-lisp :exports none
   (list
    (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 11)
    (funcall (laat/make-masker "XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X") 101)
@@ -122,9 +123,7 @@ that works
 #+RESULTS:
 | 73 | 101 | 64 |
 
-Execute the example
-
-#+begin_src emacs-lisp :var example=example :exports both
+#+begin_src emacs-lisp :var example=example :exports code
   (defun laat/exec-program (program-str)
     (let ((mem (make-hash-table :test 'equal))
           (mask 'identity)
@@ -137,14 +136,17 @@ Execute the example
                      (puthash loc (funcall mask val) mem))))
       (cl-loop for val being the hash-values of mem
                sum val)))
+#+end_src
 
+#+RESULTS:
+: laat/exec-program
+
+#+begin_src emacs-lisp :exports none :var example=example
   (laat/exec-program example)
 #+end_src
 
 #+RESULTS:
 : 165
-
-Compute my result
 
 #+begin_src emacs-lisp :exports both
   (laat/exec-program (laat/read-file "data/14.txt"))
@@ -218,6 +220,7 @@ The second example works
 : 3706820676200
 
 
+#+html: </details>
 * Day 13
 
 #+html: <details> <summary>Click to expand!</summary>
