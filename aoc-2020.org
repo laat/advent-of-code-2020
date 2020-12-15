@@ -47,8 +47,87 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+html: </details>
 
+* Day 15
+
+** Part 1
+
+#+begin_src emacs-lisp
+  (defun laat/play-game (init end history)
+    (cl-loop for x in init
+             for i from 1
+             do (puthash x (list i) history))
+
+    (cl-loop with last = (car (last init))
+             for i from (+ 1 (length init)) to end
+             do (let* ((seen (gethash last history))
+                       (prev1 (car seen))
+                       (prev2 (cadr seen))
+                       (next-value (if prev2 (- prev1 prev2) 0)))
+                  (puthash next-value (list i (car (gethash next-value history))) history)
+                  (setf last next-value))
+             finally return last))
+#+end_src
+
+#+RESULTS:
+: laat/play-game
+
+#+begin_src emacs-lisp :exports both
+ (laat/play-game '(0 8 15 2 12 1 4) 2020 (make-hash-table :test 'equal))
+#+end_src
+
+#+RESULTS:
+: 289
+
+** Part 2 - The garbage collector
+
+With the algorithm from Part 1 it takes 3 minutes to run and write the result into this file. However! Emacs hangs for an additional 20 minutes when collecting the garbage produced by the algorithm.
+
+If you dare, you can collect the garbage first =M-x garbage-collect= and then run the algorithm:
+
+#+begin_src emacs-lisp :exports both :eval never
+ (laat/play-game '(0 8 15 2 12 1 4) 30000000 (make-hash-table :test 'equal))
+#+end_src
+
+#+RESULTS:
+: 1505722
+
+And finally run =M-x garbage-collect= again (if not triggered automatically), and observe that it takes a **very** long time to become responsive again.
+
+*** The fix
+
+To fix this, I've created an algorithm that does not allocate that much memory during each loop, and reuses as much as possible. It's about as fast, but does not hang during garbage collection once it's done.
+
+#+begin_src emacs-lisp
+  (defun laat/play-game2 (init end)
+    (let ((mem (make-vector (* 2 (+ 1 end)) nil)))
+      (cl-loop for x in init
+               for i from 1
+               do (aset mem (* 2 x) i))
+      (cl-loop with last = (car (last init))
+               for i from (+ 1 (length init)) to end
+               do (let* ((idx (* 2 last))
+                         (prev1 (aref mem idx))
+                         (prev2 (aref mem (+ 1 idx)))
+                         (next-value (if prev2 (- prev1 prev2) 0))
+                         (next-idx (* 2 next-value)))
+                    (aset mem (+ 1 next-idx) (aref mem next-idx))
+                    (aset mem next-idx i)
+                    (setf last next-value))
+               finally return last)))
+#+end_src
+
+#+RESULTS:
+: laat/play-game2
+
+#+begin_src emacs-lisp :exports both :eval never
+ (laat/play-game2 '(0 8 15 2 12 1 4) 30000000)
+#+end_src
+
+#+RESULTS:
+: 1505722
+
 * Day 14
-#+html: <details open> <summary>Click to expand!</summary>
+#+html: <details> <summary>Click to expand!</summary>
 
 @@html:<a name="day-14-part-1">@@
 @@html:</a>@@
