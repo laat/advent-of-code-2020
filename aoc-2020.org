@@ -126,6 +126,8 @@ To fix this, I've created an algorithm that does not allocate that much memory d
 #+RESULTS:
 : 1505722
 
+*future self:* =(make-vector end nil)= should suffice, =i-1= is =prev1=.
+
 * Day 14
 #+html: <details> <summary>Click to expand!</summary>
 
