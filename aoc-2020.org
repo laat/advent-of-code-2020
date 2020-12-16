@@ -47,6 +47,127 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 #+html: </details>
 
+* Day 16
+
+** Part 1
+#+begin_src emacs-lisp :exports both
+  (defun laat/parse-rule (line)
+    (when (string-match
+           (rx (group (+ digit)) "-" (group (+ digit)) " or "
+               (group (+ digit)) "-" (group (+ digit)))
+           line)
+      (list (list (string-to-number (match-string 1 line))
+                  (string-to-number (match-string 2 line)))
+            (list (string-to-number (match-string 3 line))
+                  (string-to-number (match-string 4 line))))))
+
+  (defun laat/parse-rules (rules)
+    (mapcan 'laat/parse-rule (split-string rules "\n")))
+
+  (defun laat/check-rule (value rule)
+    (and (<= (car rule) value) (<= value (cadr rule))))
+
+  (defun laat/parse-tickets (tickets)
+    (mapcan (lambda (line) (mapcar 'string-to-number (split-string line ",")))
+            (cdr (split-string tickets "\n"))))
+
+  (pcase-let*
+      ((data (laat/read-file "data/16.txt"))
+       (`(,rules-str _ ,nearby-str) (split-string data "\n\n"))
+       (rules (laat/parse-rules rules-str))
+       (nearby (laat/parse-tickets nearby-str)))
+    (->> nearby
+         (-remove (lambda (v) (-some? (lambda (r) (laat/check-rule v r)) rules)))
+         (-sum)))
+#+end_src
+
+#+RESULTS:
+: 23122
+
+
+** Part 2
+
+#+begin_src emacs-lisp :exports both
+  (defun laat/parse-rule (line)
+    (when (string-match
+           (rx (group (+ any)) ": "
+               (group (+ digit)) "-" (group (+ digit)) " or "
+               (group (+ digit)) "-" (group (+ digit)))
+           line)
+      (list
+       :name (match-string 1 line)
+       :valid?
+       `(lambda (value)
+          (or
+           (and (<= ,(string-to-number (match-string 2 line)) value)
+                (<= value ,(string-to-number (match-string 3 line))) )
+           (and (<= ,(string-to-number (match-string 4 line)) value)
+                (<= value ,(string-to-number (match-string 5 line))) )
+           )))))
+
+  (defun laat/parse-tickets (tickets)
+    (mapcar (lambda (line) (mapcar 'string-to-number (split-string line ",")))
+            (cdr (split-string tickets "\n"))))
+
+  (defun laat/valid-tickets (tickets rules)
+    (-filter
+     (lambda (ticket)
+       (-all?
+        (lambda (value)
+          (-some?
+           (lambda (rule) (funcall (plist-get rule :valid?) value))
+           rules))
+        ticket))
+     tickets))
+
+  (defun laat/transpose (list-of-lists)
+    (-non-nil
+     (cl-loop for list in list-of-lists
+              for i from 0
+              collect
+              (cl-loop for list2 in list-of-lists
+                       when (nth i list2)
+                       collect (nth i list2)))))
+
+  (defun laat/valid-rulenames (rules ticket-column)
+    (->> rules
+         (-map
+          (lambda (rule)
+            (when (-all? (plist-get rule :valid?) ticket-column)
+              (plist-get rule :name))))
+         (-non-nil)))
+
+  (pcase-let*
+      ((`(,rules-str ,my-str ,nearby-str) (split-string (laat/read-file "data/16.txt") "\n\n"))
+       (rules (mapcar 'laat/parse-rule (split-string rules-str "\n")))
+       (valid-rulenames (apply-partially 'laat/valid-rulenames rules))
+       (my-ticket (car (laat/parse-tickets my-str)))
+       (nearby (laat/valid-tickets (laat/parse-tickets nearby-str) rules))
+       (tickets (cons my-ticket nearby))
+       (column-candidates (mapcar valid-rulenames (laat/transpose tickets))))
+    (cl-loop
+     while (< 1 (apply 'max (mapcar 'length column-candidates)))
+     for singles = (->> column-candidates
+                        (-map (lambda (c) (when (= 1 (length c)) (car c))) )
+                        (-non-nil))
+     do
+     (cl-loop for candidate in column-candidates
+              for i from 0
+              when (< 1 (length candidate))
+              do (setf (nth i column-candidates)
+                       (cl-set-difference (nth i column-candidates) singles)))
+     finally return
+     (cl-loop for candidate in column-candidates
+              for i from 0
+              when (s-starts-with? "departure" (car candidate))
+              collect (nth i my-ticket) into ns
+              finally return (apply '* ns))))
+
+#+end_src
+
+#+RESULTS:
+: 362974212989
+
 * Day 15
 
 #+html: <details> <summary>Click to expand!</summary>
