@@ -95,7 +95,7 @@ And finally run =M-x garbage-collect= again (if not triggered automatically), an
 
 *** The fix
 
-To fix this, I've created an algorithm that does not allocate that much memory during each loop, and reuses as much as possible. It's about as fast, but does not hang during garbage collection once it's done.
+To fix this, I've created an algorithm that does not allocate that much memory during each iteration of the loop, and reuses as much as possible. It's about as fast, but does not hang during garbage collection once it's done.
 
 #+begin_src emacs-lisp :exports none :eval never
   ;; better?
