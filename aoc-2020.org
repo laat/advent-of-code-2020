@@ -49,6 +49,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 
 * Day 15
 
+#+html: <details> <summary>Click to expand!</summary>
 ** Part 1
 
 #+begin_src emacs-lisp
@@ -97,8 +98,7 @@ And finally run =M-x garbage-collect= again (if not triggered automatically), an
 
 To fix this, I've created an algorithm that does not allocate that much memory during each iteration of the loop, and reuses as much as possible. It's about as fast, but does not hang during garbage collection once it's done.
 
-#+begin_src emacs-lisp :exports none :eval never
-  ;; better?
+#+begin_src emacs-lisp :eval never
   (defun laat/play-game2 (init end)
     (let* ((size (max end (+ 1 (apply 'max init))))
            (history (make-vector size nil)))
@@ -114,28 +114,6 @@ To fix this, I've created an algorithm that does not allocate that much memory d
                finally return lst)))
 #+end_src
 
-#+begin_src emacs-lisp
-  (defun laat/play-game2 (init end)
-    (let ((mem (make-vector (* 2 (+ 1 end)) nil)))
-      (cl-loop for x in init
-               for i from 1
-               do (aset mem (* 2 x) i))
-      (cl-loop with last = (car (last init))
-               for i from (+ 1 (length init)) to end
-               do (let* ((idx (* 2 last))
-                         (prev1 (aref mem idx))
-                         (prev2 (aref mem (+ 1 idx)))
-                         (next-value (if prev2 (- prev1 prev2) 0))
-                         (next-idx (* 2 next-value)))
-                    (aset mem (+ 1 next-idx) (aref mem next-idx))
-                    (aset mem next-idx i)
-                    (setf last next-value))
-               finally return last)))
-#+end_src
-
-#+RESULTS:
-: laat/play-game2
-
 #+begin_src emacs-lisp :exports both :eval never
  (laat/play-game2 '(0 8 15 2 12 1 4) 30000000)
 #+end_src
@@ -143,8 +121,7 @@ To fix this, I've created an algorithm that does not allocate that much memory d
 #+RESULTS:
 : 1505722
 
-*future self:* =(make-vector end nil)= should suffice, =i-1= is =prev1=.
-
+#+html: </details>
 * Day 14
 #+html: <details> <summary>Click to expand!</summary>
 
