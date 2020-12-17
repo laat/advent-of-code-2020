@@ -24,7 +24,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
   (defun laat/range (len)
     (cl-loop for i below len collect i))
 
-  (defun laat/string-to-char (str)
+  (defun laat/string-to-chars (str)
     (mapcar 'identity str))
 
   (defun laat/make-dict (kv-list &rest htargs)
@@ -42,13 +42,129 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (split-string (laat/read-file file-name) "\n" t))
 #+end_src
 
+** The times macro
+
+#+begin_src emacs-lisp :exports code
+  (defmacro laat/times (n fn arg)
+    (cons 'thread-last (cons arg (cl-loop for i below n collect fn))))
+#+end_src
+
 #+RESULTS:
-: laat/read-lines
+: laat/times
+
+#+begin_src emacs-lisp :exports code
+  (laat/times 3 sqrt 256)
+#+end_src
+
+expands to
+
+#+begin_src emacs-lisp :exports results
+  (format "%s" (macroexpand
+   '(laat/times 3 sqrt 256)))
+#+end_src
+
+#+RESULTS:
+: (sqrt (sqrt (sqrt 256)))
 
 #+html: </details>
 
-* Day 16
+* Day 17
 
+My input
+
+#+name: my-input
+#+begin_example
+##.#####
+#.##..#.
+.##...##
+###.#...
+.#######
+##....##
+###.###.
+.#.#.#..
+#+end_example
+
+** COMMENT example
+#+name: example
+#+begin_example
+.#.
+..#
+###
+#+end_example
+
+** Part 1
+
+#+begin_src emacs-lisp :var input=my-input
+  (defmacro laat/times (n fn arg)
+    (cons 'thread-last (cons arg (cl-loop for i below n collect fn))))
+
+  (defun laat/add (as bs)
+    (-zip-with '+ as bs))
+
+  (defun laat/xcons (a b)
+    (mapcan (lambda (x) (mapcar (lambda (y) (cons x y)) b)) a))
+
+  (setq laat/neighbourhood
+        (let ((dirs '(-1 0 1)))
+          (laat/xcons dirs (laat/xcons dirs (laat/xcons dirs '(nil))))))
+
+  (defun laat/neighbours (point)
+    (--filter (not (equal point it))
+              (--map (laat/add point it) laat/neighbourhood)))
+
+  (defun laat/read-initial-alive (input)
+    (->> input
+         (s-trim)
+         (s-lines)
+         (-map 'laat/string-to-chars)
+         (-map-indexed
+          (lambda (x line) (--map-indexed (when (eq ?# it) (list x it-index 0)) line)))
+         (apply 'append)))
+
+  (defun laat/count-alive-neighbours (point points)
+    (length (cl-intersection (laat/neighbours point) points
+                             :test 'equal)))
+
+  (defun laat/next-generation (points)
+    (--> points
+         (mapcan 'laat/neighbours it)
+         (cl-remove-duplicates it :test 'equal)
+         (-filter (lambda (candidate)
+                    (let* ((is-alive (cl-find candidate points :test 'equal))
+                           (count-neighbours (laat/count-alive-neighbours candidate points)))
+                      (or (and is-alive (or (eq count-neighbours 2) (eq count-neighbours 3)))
+                          (and (not is-alive) (eq count-neighbours 3)))))
+                  it)))
+
+  (length (laat/times 6 laat/next-generation (laat/read-initial-alive input)))
+#+end_src
+
+#+RESULTS:
+: 310
+
+** COMMENT Part 2
+
+#+begin_src emacs-lisp :var input=example
+
+  (setq laat/neighbourhood
+        (let ((dirs '(-1 0 1)))
+          (laat/xcons dirs (laat/xcons dirs (laat/xcons dirs (laat/xcons dirs '(nil)))))))
+
+
+  (defun laat/read-initial-alive (input)
+    (->> input
+         (s-trim)
+         (s-lines)
+         (-map 'laat/string-to-chars)
+         (-map-indexed
+          (lambda (x line) (--map-indexed (when (eq ?# it) (list x it-index 0 0)) line)))
+         (apply 'append)))
+
+  (length (laat/times 6 laat/next-generation (laat/read-initial-alive input)))
+#+end_src
+
+* Day 16
+#+html: <details> <summary>Click to expand!</summary>
 ** Part 1
 #+begin_src emacs-lisp :exports both
   (defun laat/parse-rule (line)
@@ -167,6 +283,7 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
 #+RESULTS:
 : 362974212989
 
+#+html: </details>
 * Day 15
 
 #+html: <details> <summary>Click to expand!</summary>
@@ -242,6 +359,7 @@ To fix this, I've created an algorithm that does not allocate that much memory d
 : 1505722
 
 #+html: </details>
+
 * Day 14
 #+html: <details> <summary>Click to expand!</summary>
 
