@@ -100,10 +100,9 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
        `(lambda (value)
           (or
            (and (<= ,(string-to-number (match-string 2 line)) value)
-                (<= value ,(string-to-number (match-string 3 line))) )
+                (<= value ,(string-to-number (match-string 3 line))))
            (and (<= ,(string-to-number (match-string 4 line)) value)
-                (<= value ,(string-to-number (match-string 5 line))) )
-           )))))
+                (<= value ,(string-to-number (match-string 5 line)))))))))
 
   (defun laat/parse-tickets (tickets)
     (mapcar (lambda (line) (mapcar 'string-to-number (split-string line ",")))
