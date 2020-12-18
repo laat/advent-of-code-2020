@@ -65,6 +65,95 @@ expands to
 
 #+html: </details>
 
+* COMMENT Day 18
+#+begin_src emacs-lisp
+  (defun laat/read-tokens (s)
+    (pcase s
+      (`nil nil)
+      ((rx string-start (group (+ digit)) (* whitespace))
+       (cons (string-to-number (match-string 1 s))
+             (laat/read-token (substring s (match-end 0) ))))
+      ((rx string-start "+" (* whitespace))
+       (cons '+ (laat/read-token (substring s (match-end 0) ))))
+      ((rx string-start "*" (* whitespace))
+       (cons '* (laat/read-token (substring s (match-end 0) ))))
+      ((rx string-start "(" (* whitespace))
+       (cons "(" (laat/read-token (substring s (match-end 0) ))))
+      ((rx string-start ")" (* whitespace))
+       (cons ")" (laat/read-token (substring s (match-end 0) ))))))
+
+  (defun laat/match-open (tokens)
+    (cl-loop with opens = 1
+             for token in tokens
+             for i from 0
+             when (and (eq opens 1) (equal token ")"))
+             return (list group (nthcdr (+ i 1) tokens))
+             collect token into group
+             do (if (equal token "(") (setf opens (+ opens 1)))
+             do (if (equal token ")") (setf opens (- opens 1)))))
+
+  (defun laat/parse (tokens)
+    (pcase tokens
+      (`(,a * . ,c) (list '* a (laat/parse c)))
+      (`(,a + . ,c) (list '+ a (laat/parse c)))
+      (`("(" . ,r)
+       (let* ((m (laat/match-open r))
+              (end (laat/parse (cadr m))))
+         (if end (cons (laat/parse (car m)) end)
+           (laat/parse (car m)))))
+      (`(,x) x)))
+
+  ;; (let ((tokens (laat/read-token (s-trim ex))))
+  ;;   (format "%s" tokens)
+  ;;   (format "%s" (laat/parse tokens)))
+  ;; (laat/match-open '(1 2 3 ")" 4))
+  ;; (laat/match-open '(1 "(" 2 3 ")" ")" 4))
+  ;;(laat/read-token ex)
+#+end_src
+
+#+name: example
+#+begin_example
+1 + 2 * 3 + 4 * 5 + 6
+#+end_example
+
+#+begin_src emacs-lisp :var example=example
+(format "%s" (laat/parse (laat/read-token example)))
+#+end_src
+
+#+RESULTS:
+: (+ 1 (* 2 (+ 3 (* 4 (+ 5 6)))))
+
+#+begin_src emacs-lisp :var example=example
+(eval (laat/parse (laat/read-token example)))
+#+end_src
+
+#+RESULTS:
+: 95
+
+#+name: example2
+#+begin_example
+5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))
+#+end_example
+
+#+RESULTS:
+: laat/parse
+
+#+begin_src emacs-lisp :var ex=example
+
+    (let ((tokens (laat/read-token (s-trim ex))))
+      (format "%s" (cons (cadr tokens) (cons "(" (cons (car tokens) (cddr tokens)))))
+      (format "%s" (cons (cadr tokens) (cons (car tokens) (cddr tokens))))
+      (format "%s" (laat/parse (list 3 '* 4 '+ 3)))
+      (format "%s" (laat/parse (list "(" 3 '+ 4 ")" '* 3)))
+      (format "%s" (laat/parse tokens))
+  )
+
+#+end_src
+
+#+RESULTS:
+: (* 2 (+ 3 ((* 4 nil) nil)))
+
+
 * Day 17
 
 My input
