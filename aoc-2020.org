@@ -49,9 +49,6 @@ Using [[https://orgmode.org/][org-mode]] and Emacs Lisp to solve Advent of Code.
     (cons 'thread-last (cons arg (cl-loop for i below n collect fn))))
 #+end_src
 
-#+RESULTS:
-: laat/times
-
 #+begin_src emacs-lisp :exports code
   (laat/times 3 sqrt 256)
 #+end_src
@@ -142,10 +139,10 @@ My input
 #+RESULTS:
 : 310
 
-** COMMENT Part 2
+** Part 2
 
-#+begin_src emacs-lisp :var input=example
-
+⚠️ Slow. 1 hour or more.
+#+begin_src emacs-lisp :var input=my-input
   (setq laat/neighbourhood
         (let ((dirs '(-1 0 1)))
           (laat/xcons dirs (laat/xcons dirs (laat/xcons dirs (laat/xcons dirs '(nil)))))))
@@ -162,6 +159,9 @@ My input
 
   (length (laat/times 6 laat/next-generation (laat/read-initial-alive input)))
 #+end_src
+
+#+RESULTS:
+: 2056
 
 * Day 16
 #+html: <details> <summary>Click to expand!</summary>
